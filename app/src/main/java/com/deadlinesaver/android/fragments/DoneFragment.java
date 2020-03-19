@@ -22,9 +22,11 @@ import com.google.android.material.snackbar.Snackbar;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.deadlinesaver.android.fragments.UndoneFragment.backlogList_undone;
+
 public class DoneFragment extends Fragment {
 
-    private static List<Backlog> backlogList_done = new ArrayList<>();
+    public static List<Backlog> backlogList_done = new ArrayList<>();
     private static RecyclerView recyclerView;
 
     @Override
@@ -78,8 +80,14 @@ public class DoneFragment extends Fragment {
     }
 
     public static void addBacklog(final Backlog backlog, boolean isInitialize) {
-        if (backlogList_done.contains(backlog))
-            return;
+        for (Backlog backlogInList : backlogList_done) {
+            if (backlogInList.getBacklogName().equals(backlog.getBacklogName()))
+                return;
+        }
+        for (Backlog backlogInList : backlogList_undone) {
+            if (backlogInList.getBacklogName().equals(backlog.getBacklogName()))
+                return;
+        }
         backlogList_done.add(backlog);
         if (!isInitialize) {
             recyclerView.getAdapter().notifyDataSetChanged();
