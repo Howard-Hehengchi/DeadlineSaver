@@ -1,15 +1,24 @@
-package com.deadlinesaver.android;
+package com.deadlinesaver.android.db;
+
+import org.litepal.crud.LitePalSupport;
 
 import java.io.Serializable;
 
-public class Backlog implements Serializable {
+public class Backlog extends LitePalSupport implements Serializable {
+
+    private int id;
 
     private String backlogName;
 
-    private boolean isDone;
+    private boolean isDone = false;
 
     public Backlog(String backlogName) {
         this.backlogName = backlogName;
+    }
+
+    public Backlog(String backlogName, boolean isDone) {
+        this.backlogName = backlogName;
+        this.isDone = isDone;
     }
 
     public String getBacklogName() {
@@ -26,5 +35,13 @@ public class Backlog implements Serializable {
 
     public void setDone(boolean done) {
         isDone = done;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 }
