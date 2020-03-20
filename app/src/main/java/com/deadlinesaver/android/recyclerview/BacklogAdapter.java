@@ -1,24 +1,33 @@
-package com.deadlinesaver.android;
+package com.deadlinesaver.android.recyclerview;
 
+import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
+import com.google.android.material.snackbar.Snackbar;
 
 import org.litepal.LitePal;
 
+import java.util.Collections;
 import java.util.List;
 
-public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHolder> {
+public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHolder> implements onMoveAndSwipeListener {
 
+    private Context mContext;
+    private View mView;
     private List<Backlog> mBacklogList;
     private boolean isUndone = true;
 
@@ -29,13 +38,45 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
     private int lastBacklogId;
     private boolean lastBacklogIsDone;
 
-    public interface OnItemLongClickListener {
-        void onLongClick(int position);
+    @Override
+    public void onItemMove(int fromPos, int toPos) {
+        Collections.swap(mBacklogList, fromPos, toPos);
+        notifyItemMoved(fromPos, toPos);
     }
-    private OnItemLongClickListener onItemLongClickListener;
 
-    public void setOnItemLongClickListener(OnItemLongClickListener onItemLongClickListener) {
-        this.onItemLongClickListener = onItemLongClickListener;
+    /**
+     * 删除事件，并给用户撤销的机会
+     * @param position 位置
+     */
+    @Override
+    public void onItemRemove(final int position) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
+                .setTitle("您准备删除这一事件")
+                .setMessage("确定执行该操作吗？")
+                .setCancelable(false)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        removeItem(position);
+
+                        Snackbar.make(mView, "事件已删除", Snackbar.LENGTH_LONG)
+                                .setAction("撤销", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View view) {
+                                        restoreItem();
+                                        Toast.makeText(mContext, "已撤销", Toast.LENGTH_SHORT).show();
+                                    }
+                                })
+                                .show();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        notifyItemRangeChanged(0, mBacklogList.size());
+                    }
+                });
+        builder.show();
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -52,7 +93,9 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         }
     }
 
-    public BacklogAdapter(List<Backlog> backlogList, boolean isUndone) {
+    public BacklogAdapter(Context context,View view, List<Backlog> backlogList, boolean isUndone) {
+        mContext = context;
+        mView = view;
         mBacklogList = backlogList;
         this.isUndone = isUndone;
     }
@@ -98,17 +141,6 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
             }
         });
 
-        holder.backlogView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                int position = holder.getAdapterPosition();
-                if (onItemLongClickListener != null) {
-                    onItemLongClickListener.onLongClick(position);
-                }
-                return true;
-            }
-        });
-
         return holder;
     }
 
@@ -117,8 +149,6 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         Backlog backlog = mBacklogList.get(position);
         holder.backlogTextView.setText(backlog.getBacklogName());
         holder.radioButton.setChecked(backlog.isDone());
-
-
     }
 
     @Override
@@ -164,7 +194,7 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         }
     }
 
-    public void removeItem(int position) {
+    private void removeItem(int position) {
         //储存被删除事件的数据
         Backlog lastBacklog = mBacklogList.get(position);
         lastBacklogName = lastBacklog.getBacklogName();
@@ -177,7 +207,7 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         LitePal.delete(Backlog.class, lastBacklog.getId());
     }
 
-    public void restoreItem() {
+    private void restoreItem() {
         Backlog lastBacklog = new Backlog(lastBacklogName, lastBacklogIsDone);
         mBacklogList.add(lastBacklog);
         notifyItemRangeChanged(0, mBacklogList.size());
