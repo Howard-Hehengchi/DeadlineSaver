@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/item_today_todo"
+        android:icon="@drawable/ic_event_note_24dp"
+        android:title="今日待办" />
+
+    <item
+        android:id="@+id/item_all_ddl"
+        android:icon="@drawable/ic_assignment_white_24dp"
+        android:title="DDL" />
+
+    <item
+        android:id="@+id/item_personalized_settings"
+        android:icon="@drawable/ic_gavel_24dp"
+        android:title="个性化设置" />
+</menu>

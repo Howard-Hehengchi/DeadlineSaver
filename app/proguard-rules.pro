@@ -31,3 +31,13 @@
 -keep class * extends org.litepal.crud.LitePalSupport {
     *;
 }
+
+-keep class com.google.gson.** {*;}
+-keep class com.google.**{*;}
+-keep class sun.misc.Unsafe { *; }
+-keep class com.google.gson.stream.** { *; }
+-keep class com.deadlinesaver.android.gson.** { *; }
+
+-dontwarn com.squareup.okhttp3.**
+-keep class com.squareup.okhttp3.** { *;}
+-dontwarn okio.**

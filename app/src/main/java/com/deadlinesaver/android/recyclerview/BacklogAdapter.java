@@ -59,7 +59,7 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
                     public void onClick(DialogInterface dialogInterface, int i) {
                         removeItem(position);
 
-                        Snackbar.make(mView, "事件已删除", Snackbar.LENGTH_LONG)
+                        Snackbar.make(mView.getRootView(), "事件已删除", Snackbar.LENGTH_LONG)
                                 .setAction("撤销", new View.OnClickListener() {
                                     @Override
                                     public void onClick(View view) {
@@ -130,6 +130,7 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
                     Backlog backlog = mBacklogList.get(position);
                     if (holder.isFirstClick) {
                         backlog.setDone(true);
+                        backlog.save();
                         holder.isFirstClick = false;
                     } else {
                         clickOnButton(holder.radioButton, backlog);
@@ -165,9 +166,11 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         if (radioButton.isChecked()) {
             radioButton.setChecked(false);
             backlog.setDone(false);
+            backlog.save();
         } else {
             radioButton.setChecked(true);
             backlog.setDone(true);
+            backlog.save();
         }
     }
 

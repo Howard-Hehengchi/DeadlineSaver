@@ -1,14 +1,10 @@
 package com.deadlinesaver.android.fragments;
 
-import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -17,13 +13,10 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.deadlinesaver.android.MyApplication;
-import com.deadlinesaver.android.activities.MainActivity;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.recyclerview.BacklogAdapter;
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.recyclerview.ItemTouchCallback;
-import com.google.android.material.snackbar.Snackbar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +25,7 @@ import static com.deadlinesaver.android.fragments.DoneFragment.backlogList_done;
 
 public class UndoneFragment extends Fragment {
 
-    public static List<Backlog> backlogList_undone = new ArrayList<>();
+    static List<Backlog> backlogList_undone = new ArrayList<>();
     private static RecyclerView recyclerView;
 
     @Override
@@ -42,7 +35,7 @@ public class UndoneFragment extends Fragment {
         recyclerView = (RecyclerView) view.findViewById(R.id.backlog_recycler_view_undone);
 
         //set layout manager
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext());
+        LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
         recyclerView.setLayoutManager(layoutManager);
 
         //set adapter
@@ -67,7 +60,10 @@ public class UndoneFragment extends Fragment {
         }
         backlogList_undone.add(backlog);
         if (!isInitialize) {
-            recyclerView.getAdapter().notifyDataSetChanged();
+            Log.i(TAG, "addBacklog: added");
+            recyclerView.getAdapter().notifyItemRangeChanged(0, backlogList_undone.size());
         }
     }
+
+    private static final String TAG = "UndoneFragment";
 }

@@ -1,42 +1,73 @@
 package com.deadlinesaver.android.activities;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
+import com.azhon.appupdate.config.UpdateConfiguration;
+import com.azhon.appupdate.manager.DownloadManager;
+import com.azhon.appupdate.utils.ApkUtil;
+import com.deadlinesaver.android.MyApplication;
+import com.deadlinesaver.android.UI.DraggableFab;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.R;
+import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.fragments.DoneFragment;
+import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
+import com.deadlinesaver.android.fragments.ToDoListFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
+import com.deadlinesaver.android.gson.ApkInfo;
+import com.deadlinesaver.android.util.HttpUtil;
+import com.deadlinesaver.android.UI.NoScrollViewPager;
+import com.deadlinesaver.android.util.Utility;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.google.android.material.tabs.TabLayout;
 
+import org.jetbrains.annotations.NotNull;
 import org.litepal.LitePal;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
+
 public class MainActivity extends BaseActivity {
 
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
-    private FloatingActionButton fab;
-    private List<Fragment> fragments;
-    
+    private final static String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
+    private final static String oldVersionApkName = "/TODOList.apk";
+    private ApkInfo apkInfo;
+
+    private NoScrollViewPager noScrollViewPager;
+    private BottomNavigationView bottomNavigationView;
+    private List<Fragment> fragmentList = new ArrayList<>();
+    private Toolbar toolbar;
+    private List<String> titles = new ArrayList<>();
+    private DraggableFab fab;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         initOperations();
+
+        checkUpdate();
+
+        //删除旧版本安装包
+        boolean b = ApkUtil.deleteOldApk(this, getExternalCacheDir().getPath() + oldVersionApkName);
     }
 
     @Override
@@ -58,62 +89,90 @@ public class MainActivity extends BaseActivity {
      * 所有初始化操作
      */
     private void initOperations() {
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolBar);
+        toolbar = (Toolbar) findViewById(R.id.toolBar);
         setSupportActionBar(toolbar);
 
-        tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        viewPager = (ViewPager) findViewById(R.id.view_pager);
+        initTitles();
 
-        initTabLayout();
+        initBottomNavigationView();
 
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab = (DraggableFab) findViewById(R.id.fab);
         //添加待办事项
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent
                         (MainActivity.this, AddBacklogActivity.class);
-                startActivityForResult(intent, START_ADD_BACKLOG_ACTIVITY);
+                startActivityForResult(intent, BaseActivity.START_ADD_BACKLOG_ACTIVITY);
             }
         });
+
+        fab.show();
 
         initBacklogs();
     }
 
-    private void initTabLayout() {
-        //初始化标题名称
-        final List<String> titles = new ArrayList<>();
-        titles.add("未完成");
-        titles.add("已完成");
+    /**
+     * 初始化应用各界面的标题
+     */
+    private void initTitles() {
+        titles.add("今日待办事项");
+        titles.add("我的DDL");
+        titles.add("个性化设置");
+    }
 
-        //初始化fragment数据
-        fragments = new ArrayList<>();
-        fragments.add(new UndoneFragment());
-        fragments.add(new DoneFragment());
+    /**
+     * 底部导航栏的初始化
+     */
+    private void initBottomNavigationView() {
+        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation_view);
+        noScrollViewPager = (NoScrollViewPager) findViewById(R.id.no_scroll_view_pager);
 
-        //初始化PagerAdapter
-        viewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
+        fragmentList.add(new ToDoListFragment());
+        fragmentList.add(new DDLFragment());
+        fragmentList.add(new PersonalizedSettingsFragment());
+
+        noScrollViewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @NonNull
             @Override
             public Fragment getItem(int position) {
-                return fragments.get(position);
+                return fragmentList.get(position);
             }
 
             @Override
             public int getCount() {
-                return fragments.size();
-            }
-
-            @Nullable
-            @Override
-            public CharSequence getPageTitle(int position) {
-                return titles.get(position);
+                return fragmentList.size();
             }
         });
 
-        tabLayout.setupWithViewPager(viewPager);
+        bottomNavigationView.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                switch (menuItem.getItemId()) {
+                    case R.id.item_today_todo:
+                        noScrollViewPager.setCurrentItem(0);
+                        toolbar.setTitle(titles.get(0));
+                        fab.show();
+                        return true;
+                    case R.id.item_all_ddl:
+                        noScrollViewPager.setCurrentItem(1);
+                        toolbar.setTitle(titles.get(1));
+                        fab.show();
+                        return true;
+                    case R.id.item_personalized_settings:
+                        noScrollViewPager.setCurrentItem(2);
+                        toolbar.setTitle(titles.get(2));
+                        fab.hide();
+                        return true;
+                }
+                return false;
+            }
+        });
     }
 
+    /**
+     * 从数据库读取待办事项信息并写入
+     */
     private void initBacklogs() {
         List<Backlog> backlogList = LitePal.findAll(Backlog.class);
         for (Backlog backlog : backlogList) {
@@ -123,5 +182,100 @@ public class MainActivity extends BaseActivity {
                 UndoneFragment.addBacklog(backlog, true);
             }
         }
+    }
+
+    /**
+     * 联网检测更新
+     */
+    private void checkUpdate() {
+        HttpUtil.sendOkHttpRequest(address, new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                e.printStackTrace();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(MainActivity.this,
+                                "获取更新出错", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                String responseText = response.body().string();
+                apkInfo = Utility.handleApkResponse(responseText);
+                if (apkInfo == null) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "服务器还没开……",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            int versionCode = 0;
+                            try {
+                                Context context = MyApplication.getContext();
+                                versionCode = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionCode;
+                                if (versionCode < apkInfo.versionCode) {
+                                    updateNewApk();
+                                } else {
+                                    Toast.makeText(MainActivity.this, "当前已是最新版本", Toast.LENGTH_LONG).show();
+                                }
+                            } catch (PackageManager.NameNotFoundException e) {
+                                Toast.makeText(MainActivity.this, "出错...", Toast.LENGTH_LONG).show();
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    /**
+     * 下载安装新版apk
+     */
+    private void updateNewApk() {
+        UpdateConfiguration configuration = new UpdateConfiguration()
+                //输出错误日志
+                .setEnableLog(true)
+                //设置自定义的下载
+                //.setHttpManager()
+                //下载完成自动跳动安装页面
+                .setJumpInstallPage(true)
+                //设置对话框背景图片 (图片规范参照demo中的示例图)
+                //.setDialogImage(R.drawable.ic_dialog)
+                //设置按钮的颜色
+                //.setDialogButtonColor(Color.parseColor("#E743DA"))
+                //设置对话框强制更新时进度条和文字的颜色
+                //.setDialogProgressBarColor(Color.parseColor("#E743DA"))
+                //设置按钮的文字颜色
+                .setDialogButtonTextColor(Color.WHITE)
+                //设置是否显示通知栏进度
+                .setShowNotification(true)
+                //设置是否提示后台下载toast
+                .setShowBgdToast(true)
+                //设置强制更新
+                .setForcedUpgrade(false);
+                //设置对话框按钮的点击监听
+                //.setButtonClickListener(this)
+                //设置下载过程的监听
+                //.setOnDownloadListener(this)
+
+        DownloadManager manager = DownloadManager.getInstance(MainActivity.this);
+        manager.setApkName(apkInfo.fileName)
+                .setApkUrl(apkInfo.apkUrl)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setConfiguration(configuration)
+                .setShowNewerToast(true)
+                .setApkVersionCode(apkInfo.versionCode)
+                .setApkVersionName(apkInfo.versionName)
+                .setApkSize(apkInfo.apkSize)
+                .setApkDescription(apkInfo.versionInfo)
+                .download();
     }
 }
