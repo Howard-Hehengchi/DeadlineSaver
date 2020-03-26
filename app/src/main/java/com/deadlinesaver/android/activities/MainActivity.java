@@ -106,10 +106,11 @@ public class MainActivity extends BaseActivity {
                 startActivityForResult(intent, BaseActivity.START_ADD_BACKLOG_ACTIVITY);
             }
         });
-
         fab.show();
 
         initBacklogs();
+
+        PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
     }
 
     /**

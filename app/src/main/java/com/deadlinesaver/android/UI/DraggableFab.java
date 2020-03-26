@@ -8,6 +8,7 @@ import android.view.animation.BounceInterpolator;
 
 import androidx.annotation.Nullable;
 
+import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class DraggableFab extends FloatingActionButton {
@@ -97,23 +98,33 @@ public class DraggableFab extends FloatingActionButton {
             case MotionEvent.ACTION_UP://手指离开
                 //判断是否为点击事件
                 if (isDrag) {
-                    float center = mRootMeasuredWidth / 2;
-                    //自动贴边
-                    /*if (mLastRawX <= center) {
-                        //向左贴边
-                        DraggableFab.this.animate()
-                                .setInterpolator(new BounceInterpolator())
-                                .setDuration(500)
-                                .x(40)
-                                .start();
-                    } else {*/
+                    if (PersonalizedSettingsFragment.getCertainSetting
+                            (PersonalizedSettingsFragment.SettingType.isDoubleSidesAttach)) {
+                        float center = mRootMeasuredWidth / 2;
+                        //自动贴边
+                        if (mLastRawX <= center) {
+                            //向左贴边
+                            DraggableFab.this.animate()
+                                    .setInterpolator(new BounceInterpolator())
+                                    .setDuration(500)
+                                    .x(40)
+                                    .start();
+                        } else {
+                            //向右贴边
+                            DraggableFab.this.animate()
+                                    .setInterpolator(new BounceInterpolator())
+                                    .setDuration(500)
+                                    .x(mRootMeasuredWidth - getWidth() - 40)
+                                    .start();
+                        }
+                    } else {
                         //向右贴边
                         DraggableFab.this.animate()
                                 .setInterpolator(new BounceInterpolator())
                                 .setDuration(500)
                                 .x(mRootMeasuredWidth - getWidth() - 40)
                                 .start();
-                    //}
+                    }
                 }
                 break;
         }
