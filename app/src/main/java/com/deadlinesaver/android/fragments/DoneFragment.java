@@ -18,6 +18,8 @@ import com.deadlinesaver.android.recyclerview.BacklogAdapter;
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.recyclerview.ItemTouchCallback;
 
+import org.litepal.LitePal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -61,6 +63,22 @@ public class DoneFragment extends Fragment {
         backlogList_done.add(backlog);
         if (!isInitialize) {
             recyclerView.getAdapter().notifyItemRangeChanged(0, backlogList_done.size());
+        }
+    }
+
+    public static void removeBacklogOfName(String backlogName) {
+        Backlog chosenBacklog = null;
+        for (Backlog backlog : backlogList_done) {
+            if (backlog.getBacklogName().equals(backlogName)) {
+                chosenBacklog = backlog;
+                break;
+            }
+        }
+
+        if (chosenBacklog != null) {
+            backlogList_done.remove(chosenBacklog);
+            recyclerView.getAdapter().notifyItemRangeChanged(0, backlogList_undone.size() + 1);
+            LitePal.delete(Backlog.class, chosenBacklog.getId());
         }
     }
 }

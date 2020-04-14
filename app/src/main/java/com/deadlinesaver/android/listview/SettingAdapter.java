@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
+import com.suke.widget.SwitchButton;
 
 import org.w3c.dom.Text;
 
@@ -36,13 +37,13 @@ public class SettingAdapter extends ArrayAdapter<Setting> {
         if (convertView == null) {
             view = LayoutInflater.from(getContext()).inflate(resourceId, parent, false);
             viewHolder = new ViewHolder();
-            viewHolder.settingName = (TextView) view.findViewById(R.id.personal_settings_text_view);
-            viewHolder.mSwitch = (Switch) view.findViewById(R.id.personal_settings_switch);
+            viewHolder.settingName = view.findViewById(R.id.personal_settings_text_view);
+            viewHolder.mSwitch = view.findViewById(R.id.personal_settings_switch);
 
-            viewHolder.mSwitch.setOnClickListener(new View.OnClickListener() {
+            viewHolder.mSwitch.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
                 @Override
-                public void onClick(View view) {
-                    setting.setOn(!setting.isOn());
+                public void onCheckedChanged(SwitchButton view, boolean isChecked) {
+                    setting.setOn(isChecked);
                     PersonalizedSettingsFragment.setCertainSetting
                             (PersonalizedSettingsFragment.SettingType.isDoubleSidesAttach,
                                     setting.isOn());
@@ -62,6 +63,6 @@ public class SettingAdapter extends ArrayAdapter<Setting> {
 
     class ViewHolder {
         TextView settingName;
-        Switch mSwitch;
+        SwitchButton mSwitch;
     }
 }

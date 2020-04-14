@@ -8,10 +8,10 @@ import androidx.recyclerview.widget.RecyclerView;
 
 public class ItemTouchCallback extends ItemTouchHelper.Callback {
 
-    private BacklogAdapter backlogAdapter;
+    private CustomBaseAdapter adapter;
 
-    public ItemTouchCallback(BacklogAdapter backlogAdapter) {
-        this.backlogAdapter = backlogAdapter;
+    public ItemTouchCallback(CustomBaseAdapter adapter) {
+        this.adapter = adapter;
     }
 
     @Override
@@ -31,13 +31,13 @@ public class ItemTouchCallback extends ItemTouchHelper.Callback {
             return false;
         }
 
-        backlogAdapter.onItemMove(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+        adapter.onItemMove(viewHolder.getAdapterPosition(), target.getAdapterPosition());
         return true;
     }
 
     @Override
     public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-        backlogAdapter.onItemRemove(viewHolder.getAdapterPosition());
+        adapter.onItemRemove(viewHolder.getAdapterPosition());
     }
 
     @Override

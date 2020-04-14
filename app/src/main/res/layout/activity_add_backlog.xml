@@ -18,23 +18,23 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Button
-                android:id="@+id/add_backlog_confirm"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:text="确认"
-                android:textColor="#0032E8"
-                android:background="#94FBF1"/>
-            <Button
                 android:id="@+id/add_backlog_cancel"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:gravity="center"
                 android:text="取消"
                 android:textColor="#AB000000"
-                android:background="#F8D7D7"/>
+                android:background="#FDFBFB"/>
+            <Button
+                android:id="@+id/add_backlog_confirm"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="确认"
+                android:textColor="#0032E8"
+                android:background="#F4FFFE"/>
         </LinearLayout>
 
 </LinearLayout>

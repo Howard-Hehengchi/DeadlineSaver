@@ -24,7 +24,7 @@ import org.litepal.LitePal;
 import java.util.Collections;
 import java.util.List;
 
-public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHolder> implements onMoveAndSwipeListener {
+public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder> {
 
     private Context mContext;
     private View mView;
@@ -88,8 +88,8 @@ public class BacklogAdapter extends RecyclerView.Adapter<BacklogAdapter.ViewHold
         public ViewHolder(View view) {
             super(view);
             backlogView = view;
-            radioButton = (RadioButton) view.findViewById(R.id.backlog_radio_button);
-            backlogTextView = (TextView) view.findViewById(R.id.backlog_name_text);
+            radioButton = view.findViewById(R.id.backlog_radio_button);
+            backlogTextView = view.findViewById(R.id.backlog_name_text);
         }
     }
 

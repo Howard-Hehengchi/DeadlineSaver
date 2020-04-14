@@ -13,8 +13,6 @@ import com.google.android.material.textfield.TextInputEditText;
 
 public class AddBacklogActivity extends BaseActivity {
 
-    public static final String BACKLOG_NAME = "backlog_name";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

@@ -5,13 +5,17 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.azhon.appupdate.config.UpdateConfiguration;
@@ -21,6 +25,7 @@ import com.deadlinesaver.android.MyApplication;
 import com.deadlinesaver.android.UI.DraggableFab;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.R;
+import com.deadlinesaver.android.db.Deadline;
 import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
@@ -38,16 +43,20 @@ import org.litepal.LitePal;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
+import okhttp3.internal.Util;
 
 public class MainActivity extends BaseActivity {
 
     private final static String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
-    private final static String oldVersionApkName = "/TODOList.apk";
+    private final static String oldVersionApkName_1 = "/TODOList.apk";
+    private final static String oldVersionApkName_2 = "/DeadlineSaver.apk";
     private ApkInfo apkInfo;
 
     private NoScrollViewPager noScrollViewPager;
@@ -57,6 +66,11 @@ public class MainActivity extends BaseActivity {
     private List<String> titles = new ArrayList<>();
     private DraggableFab fab;
 
+    /**
+     * 用于记录当前fragment类型，便于弹窗事件的触发
+     */
+    private FragmentType currentFragment = FragmentType.BacklogFragment;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,10 +78,14 @@ public class MainActivity extends BaseActivity {
 
         initOperations();
 
+        //使DDLFragment开始计时
+        DDLFragment.hasCreatedTimer = false;
+
         checkUpdate();
 
         //删除旧版本安装包
-        boolean b = ApkUtil.deleteOldApk(this, getExternalCacheDir().getPath() + oldVersionApkName);
+        boolean b = ApkUtil.deleteOldApk(this, getExternalCacheDir().getPath() + oldVersionApkName_1);
+        boolean b1 = ApkUtil.deleteOldApk(this, getExternalCacheDir().getPath() + oldVersionApkName_2);
     }
 
     @Override
@@ -76,14 +94,32 @@ public class MainActivity extends BaseActivity {
         switch (requestCode) {
             case START_ADD_BACKLOG_ACTIVITY:
                 if (resultCode == RESULT_OK) {
-                    Backlog backlog = (Backlog) data.getSerializableExtra(AddBacklogActivity.BACKLOG_NAME);
+                    Backlog backlog = (Backlog) data.getSerializableExtra(BACKLOG_NAME);
                     UndoneFragment.addBacklog(backlog, false);
                 }
                 break;
+            case START_ADD_DEADLINE_ACTIVITY:
+                if (resultCode == RESULT_OK) {
+                    Deadline deadline = (Deadline) data.getSerializableExtra(DEADLINE_NAME);
+                    DDLFragment.addDeadline(deadline, false);
+
+                    //判断是否需要向今日待办事项中添加该DDL
+                    Log.i(TAG, "onActivityResult: dueTime:" + deadline.getDueTime());
+                    Log.i(TAG, "onActivityResult: todayTime:" + Utility.getTodayCalendar().getTimeInMillis()/Utility.millisecondsInMinute);
+                    Log.i(TAG, "onActivityResult: currentTime:" + Utility.getCalendar().getTimeInMillis()/ Utility.millisecondsInMinute);
+                    long timeLeft = deadline.getDueTime() - Utility.getTodayCalendar().getTimeInMillis() / Utility.millisecondsInMinute;
+                    if (timeLeft <= Utility.minutesInDay) {
+                        Backlog backlog = new Backlog(deadline.getDdlName());
+                        backlog.save();
+                        UndoneFragment.addBacklog(backlog, false);
+                    }
+                }
             default:
                 break;
         }
     }
+
+    private static final String TAG = "MainActivity";
 
     /**
      * 所有初始化操作
@@ -101,14 +137,24 @@ public class MainActivity extends BaseActivity {
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent
-                        (MainActivity.this, AddBacklogActivity.class);
-                startActivityForResult(intent, BaseActivity.START_ADD_BACKLOG_ACTIVITY);
+                switch (currentFragment) {
+                    case BacklogFragment:
+                        Intent intent_backlog = new Intent
+                            (MainActivity.this, AddBacklogActivity.class);
+                        startActivityForResult(intent_backlog, BaseActivity.START_ADD_BACKLOG_ACTIVITY);
+                        break;
+                    case DeadlineFragment:
+                        Intent intent_deadline = new Intent
+                                (MainActivity.this, AddDeadlineActivity.class);
+                        startActivityForResult(intent_deadline, BaseActivity.START_ADD_DEADLINE_ACTIVITY);
+                        break;
+                }
             }
         });
         fab.show();
 
         initBacklogs();
+        initDeadlines();
 
         PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
     }
@@ -153,11 +199,13 @@ public class MainActivity extends BaseActivity {
                     case R.id.item_today_todo:
                         noScrollViewPager.setCurrentItem(0);
                         toolbar.setTitle(titles.get(0));
+                        currentFragment = FragmentType.BacklogFragment;
                         fab.show();
                         return true;
                     case R.id.item_all_ddl:
                         noScrollViewPager.setCurrentItem(1);
                         toolbar.setTitle(titles.get(1));
+                        currentFragment = FragmentType.DeadlineFragment;
                         fab.show();
                         return true;
                     case R.id.item_personalized_settings:
@@ -182,6 +230,16 @@ public class MainActivity extends BaseActivity {
             } else {
                 UndoneFragment.addBacklog(backlog, true);
             }
+        }
+    }
+
+    /**
+     * 从数据库读取DDL信息并写入
+     */
+    private void initDeadlines() {
+        List<Deadline> deadlineList = LitePal.findAll(Deadline.class);
+        for (Deadline deadline : deadlineList) {
+            DDLFragment.addDeadline(deadline, true);
         }
     }
 
@@ -278,5 +336,10 @@ public class MainActivity extends BaseActivity {
                 .setApkSize(apkInfo.apkSize)
                 .setApkDescription(apkInfo.versionInfo)
                 .download();
+    }
+
+    private enum FragmentType {
+        BacklogFragment,
+        DeadlineFragment
     }
 }

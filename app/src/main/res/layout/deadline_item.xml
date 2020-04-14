@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="6dp"
+    app:cardCornerRadius="6dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="6dp">
+        <TextView
+            android:id="@+id/ddl_name_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="18sp"
+            android:layout_marginLeft="2dp"
+            android:layout_marginTop="2dp" />
+
+        <RadioButton
+            android:id="@+id/ddl_is_done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true" />
+
+        <TextView
+            android:id="@+id/ddl_left_time_text_view"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#000000"
+            android:textSize="25sp"
+            android:maxLines="1"
+            android:layout_below="@id/ddl_name_text_view"
+            android:text="00:00"/>
+
+        <com.deadlinesaver.android.UI.TimeCounterProgressBar
+            android:id="@+id/ddl_progress"
+            style="@style/Widget.AppCompat.SeekBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/ddl_left_time_text_view"
+            android:max="100"
+            android:layout_marginBottom="5dp"
+            android:thumb="@drawable/ddl_seek_bar_thumb" />
+
+    </RelativeLayout>
+
+</androidx.cardview.widget.CardView>
