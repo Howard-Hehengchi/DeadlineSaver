@@ -236,6 +236,4 @@ public class AddDeadlineActivity extends BaseActivity{
             return targetTime;
         }
     }
-
-    private static final String TAG = "AddDeadlineActivity";
 }

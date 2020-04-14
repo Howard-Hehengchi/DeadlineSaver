@@ -32,6 +32,7 @@ import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.ToDoListFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
+import com.deadlinesaver.android.services.UpdateBacklogService;
 import com.deadlinesaver.android.util.HttpUtil;
 import com.deadlinesaver.android.UI.NoScrollViewPager;
 import com.deadlinesaver.android.util.Utility;
@@ -81,6 +82,10 @@ public class MainActivity extends BaseActivity {
         //使DDLFragment开始计时
         DDLFragment.hasCreatedTimer = false;
 
+        //启动定时服务
+        Intent intent = new Intent(this, UpdateBacklogService.class);
+        startService(intent);
+
         checkUpdate();
 
         //删除旧版本安装包
@@ -104,9 +109,6 @@ public class MainActivity extends BaseActivity {
                     DDLFragment.addDeadline(deadline, false);
 
                     //判断是否需要向今日待办事项中添加该DDL
-                    Log.i(TAG, "onActivityResult: dueTime:" + deadline.getDueTime());
-                    Log.i(TAG, "onActivityResult: todayTime:" + Utility.getTodayCalendar().getTimeInMillis()/Utility.millisecondsInMinute);
-                    Log.i(TAG, "onActivityResult: currentTime:" + Utility.getCalendar().getTimeInMillis()/ Utility.millisecondsInMinute);
                     long timeLeft = deadline.getDueTime() - Utility.getTodayCalendar().getTimeInMillis() / Utility.millisecondsInMinute;
                     if (timeLeft <= Utility.minutesInDay) {
                         Backlog backlog = new Backlog(deadline.getDdlName());
@@ -118,8 +120,6 @@ public class MainActivity extends BaseActivity {
                 break;
         }
     }
-
-    private static final String TAG = "MainActivity";
 
     /**
      * 所有初始化操作
