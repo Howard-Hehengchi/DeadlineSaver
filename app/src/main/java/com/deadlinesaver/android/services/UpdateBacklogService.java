@@ -5,6 +5,8 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.os.SystemClock;
+import android.util.Log;
 
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.db.Deadline;
@@ -17,9 +19,6 @@ import java.util.Calendar;
 import java.util.List;
 
 public class UpdateBacklogService extends Service {
-    public UpdateBacklogService() {
-    }
-
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -27,13 +26,17 @@ public class UpdateBacklogService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        deleteOldBacklogs();
-        updateNewBacklogs();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                deleteOldBacklogs();
+                updateNewBacklogs();
+            }
+        }).start();
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Calendar todayCalendar = Utility.getTodayCalendar();
-        long millisInDay = 24 * 60 * 60 * 1000;
-        long triggerAtTime = todayCalendar.getTimeInMillis() + millisInDay;
+        long millisInHour = 60 * 60 * 1000;
+        long triggerAtTime = System.currentTimeMillis() + millisInHour;
         Intent i = new Intent(this, UpdateBacklogService.class);
         PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
         alarmManager.cancel(pi);

@@ -77,14 +77,14 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //启动定时服务
+        Intent intent = new Intent(this, UpdateBacklogService.class);
+        startService(intent);
+
         initOperations();
 
         //使DDLFragment开始计时
         DDLFragment.hasCreatedTimer = false;
-
-        //启动定时服务
-        Intent intent = new Intent(this, UpdateBacklogService.class);
-        startService(intent);
 
         checkUpdate();
 
