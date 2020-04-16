@@ -5,17 +5,14 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 
-import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.CountDownTimer;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.azhon.appupdate.config.UpdateConfiguration;
@@ -32,12 +29,10 @@ import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.ToDoListFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
-import com.deadlinesaver.android.services.UpdateBacklogService;
 import com.deadlinesaver.android.util.HttpUtil;
 import com.deadlinesaver.android.UI.NoScrollViewPager;
 import com.deadlinesaver.android.util.Utility;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.jetbrains.annotations.NotNull;
 import org.litepal.LitePal;
@@ -46,14 +41,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
-import okhttp3.internal.Util;
 
 public class MainActivity extends BaseActivity {
+
+    private final static String spName = "UpdateTime";
+    private final static String lastUpdateTimeName = "lastUpdateTime";
 
     private final static String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
     private final static String oldVersionApkName_1 = "/TODOList.apk";
@@ -77,9 +73,28 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //启动定时服务
-        Intent intent = new Intent(this, UpdateBacklogService.class);
-        startService(intent);
+        //每日第一次打开app时更新今日待办
+        Calendar todayCalendar = Utility.getTodayCalendar();
+        SharedPreferences sharedPreferences = getSharedPreferences(spName, Context.MODE_PRIVATE);
+        long lastUpdateTime = sharedPreferences.getLong(lastUpdateTimeName, todayCalendar.getTimeInMillis() - 1);
+        if (lastUpdateTime <= todayCalendar.getTimeInMillis()) {
+            //如果上次更新时间早于今日00：00的毫秒数，即今日尚未更新
+            //进行更新操作
+            LitePal.deleteAll(Backlog.class);
+            List<Deadline> deadlineList = LitePal.findAll(Deadline.class);
+            for (Deadline deadline : deadlineList) {
+                long timeLeft = deadline.getDueTime() - Utility.getTodayCalendar().getTimeInMillis() / Utility.millisecondsInMinute;
+                if (timeLeft <= Utility.minutesInDay) {
+                    Backlog backlog = new Backlog(deadline.getDdlName());
+                    backlog.save();
+                }
+            }
+            //保存本次更新时间
+            lastUpdateTime = Utility.getCalendar().getTimeInMillis();
+            SharedPreferences.Editor editor = getSharedPreferences(spName, Context.MODE_PRIVATE).edit();
+            editor.putLong(lastUpdateTimeName, lastUpdateTime);
+            editor.apply();
+        }
 
         initOperations();
 

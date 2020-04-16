@@ -8,8 +8,8 @@ android {
         applicationId "com.deadlinesaver.android"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 8
-        versionName "0.4.3"
+        versionCode 9
+        versionName "0.4.4"
         resValue "string", "authorities", applicationId
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
