@@ -33,6 +33,8 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
 public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolder> {
 
     private static final int minutesOfDay = 24 * 60;
@@ -62,37 +64,37 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
         notifyItemMoved(fromPos, toPos);
     }
 
-    private static final String TAG = "DeadlineAdapter";
     @Override
     public void onItemRemove(final int position) {
-        Log.i(TAG, "onItemRemove: called");
-        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity)
-                .setTitle("您准备删除此DDL")
-                .setMessage("确定执行该操作吗？")
-                .setCancelable(false)
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        SweetAlertDialog dialog = new SweetAlertDialog(mActivity, SweetAlertDialog.WARNING_TYPE)
+                .setTitleText("您准备删除这个DDL")
+                .setContentText("确定执行该操作吗？")
+                .setConfirmText("是的，我很确定！")
+                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
+                    public void onClick(SweetAlertDialog sweetAlertDialog) {
                         removeItem(position);
 
-                        Snackbar.make(mView.getRootView(), "DDL已删除", Snackbar.LENGTH_LONG)
-                                .setAction("撤销", new View.OnClickListener() {
+                        sweetAlertDialog.setTitleText("DDL已删除！")
+                                .setContentText("如果反悔请点击下方按钮撤销")
+                                .setConfirmText("好的没事了")
+                                .setConfirmClickListener(null)
+                                .setCancelText("快撤销！")
+                                .showCancelButton(true)
+                                .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                                     @Override
-                                    public void onClick(View view) {
+                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
                                         restoreItem(lastDeadlineDueTime);
+                                        sweetAlertDialog.dismissWithAnimation();
                                         Toast.makeText(mActivity, "已撤销", Toast.LENGTH_SHORT).show();
                                     }
                                 })
-                                .show();
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        notifyItemRangeChanged(0, mDeadlineList.size());
+                                .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
                     }
                 });
-        builder.show();
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        notifyItemRangeChanged(0, mDeadlineList.size());
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -172,23 +174,33 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
             public void onClick(View view) {
                 int position = holder.getAdapterPosition();
                 if (position >= 0) {//防止连续点击出现返回值为-1的情况
-                    Log.i(TAG, "onCheckedChanged: called");
                     removeItem(position);
 
                     if (holder.deadlineTimeTextView.getText().toString().equals(timeOver)) {
                         //如果此时DDL已经过期
-                        Snackbar.make(mView.getRootView(), "很遗憾，你超时了", Snackbar.LENGTH_LONG).show();
+                        SweetAlertDialog dialog = new SweetAlertDialog(mActivity, SweetAlertDialog.ERROR_TYPE)
+                                .setTitleText("很遗憾，你超时了");
+                        dialog.setCanceledOnTouchOutside(true);
+                        dialog.show();
                     } else {
                         //如果尚未过期
-                        Snackbar.make(mView.getRootView(), "完成DDL啦！", Snackbar.LENGTH_LONG)
-                                .setAction("诶没好呢", new View.OnClickListener() {
+                        SweetAlertDialog dialog = new SweetAlertDialog(mActivity, SweetAlertDialog.SUCCESS_TYPE)
+                                .setTitleText("完成DDL啦！")
+                                .setConfirmText("好的")
+                                .setConfirmClickListener(null)
+                                .setCancelText("诶没好呢")
+                                .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                                     @Override
-                                    public void onClick(View view) {
+                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
                                         restoreItem(lastDeadlineDueTime);
-                                        Toast.makeText(mActivity, "好吧DDL又回来了", Toast.LENGTH_SHORT).show();
+
+                                        sweetAlertDialog.setTitleText("DDL又回来了...")
+                                                .showCancelButton(false)
+                                                .changeAlertType(SweetAlertDialog.ERROR_TYPE);
                                     }
-                                })
-                                .show();
+                                });
+                        dialog.setCanceledOnTouchOutside(true);
+                        dialog.show();
                     }
                 }
             }

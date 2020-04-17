@@ -5,7 +5,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Switch;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,9 +12,8 @@ import androidx.annotation.Nullable;
 
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
-import com.suke.widget.SwitchButton;
-
-import org.w3c.dom.Text;
+import com.nightonke.jellytogglebutton.JellyToggleButton;
+import com.nightonke.jellytogglebutton.State;
 
 import java.util.List;
 
@@ -40,9 +38,16 @@ public class SettingAdapter extends ArrayAdapter<Setting> {
             viewHolder.settingName = view.findViewById(R.id.personal_settings_text_view);
             viewHolder.mSwitch = view.findViewById(R.id.personal_settings_switch);
 
-            viewHolder.mSwitch.setOnCheckedChangeListener(new SwitchButton.OnCheckedChangeListener() {
+            viewHolder.mSwitch.setOnStateChangeListener(new JellyToggleButton.OnStateChangeListener() {
                 @Override
-                public void onCheckedChanged(SwitchButton view, boolean isChecked) {
+                public void onStateChange(float process, State state, JellyToggleButton jtb) {
+                    boolean isChecked = false;
+                    if (state == State.LEFT) {
+                        isChecked = false;
+                    } else if (state == State.RIGHT){
+                        isChecked = true;
+                    }
+
                     setting.setOn(isChecked);
                     PersonalizedSettingsFragment.setCertainSetting
                             (PersonalizedSettingsFragment.SettingType.isDoubleSidesAttach,
@@ -63,6 +68,6 @@ public class SettingAdapter extends ArrayAdapter<Setting> {
 
     class ViewHolder {
         TextView settingName;
-        SwitchButton mSwitch;
+        JellyToggleButton mSwitch;
     }
 }

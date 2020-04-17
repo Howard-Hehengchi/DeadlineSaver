@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.deadlinesaver.android.util.VibrateUtil;
+
 public class ItemTouchCallback extends ItemTouchHelper.Callback {
 
     private CustomBaseAdapter adapter;

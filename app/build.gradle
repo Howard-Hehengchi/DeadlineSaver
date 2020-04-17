@@ -52,5 +52,6 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.4.0")
     implementation 'com.google.code.gson:gson:2.8.6'
     implementation 'com.azhon:appupdateX:2.6.0'
-    implementation 'com.github.zcweng:switch-button:0.0.3@aar'
+    implementation 'com.nightonke:jellytogglebutton:1.0.2'
+    implementation 'cn.pedant.sweetalert:library:1.3'
 }

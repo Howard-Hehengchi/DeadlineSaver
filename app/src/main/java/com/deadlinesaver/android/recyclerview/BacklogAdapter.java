@@ -1,8 +1,11 @@
 package com.deadlinesaver.android.recyclerview;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,16 +20,18 @@ import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
-import com.google.android.material.snackbar.Snackbar;
+import com.deadlinesaver.android.util.VibrateUtil;
 
 import org.litepal.LitePal;
 
 import java.util.Collections;
 import java.util.List;
 
+import cn.pedant.SweetAlert.SweetAlertDialog;
+
 public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder> {
 
-    private Context mContext;
+    private Activity mActivity;
     private View mView;
     private List<Backlog> mBacklogList;
     private boolean isUndone = true;
@@ -50,33 +55,35 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
      */
     @Override
     public void onItemRemove(final int position) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
-                .setTitle("您准备删除这一事件")
-                .setMessage("确定执行该操作吗？")
-                .setCancelable(false)
-                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        SweetAlertDialog dialog = new SweetAlertDialog(mActivity, SweetAlertDialog.WARNING_TYPE)
+                .setTitleText("您准备删除这一事件")
+                .setContentText("确定执行该操作吗？")
+                .setConfirmText("是的，我很确定！")
+                .setConfirmClickListener(new SweetAlertDialog.OnSweetClickListener() {
                     @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
+                    public void onClick(SweetAlertDialog sweetAlertDialog) {
                         removeItem(position);
 
-                        Snackbar.make(mView.getRootView(), "事件已删除", Snackbar.LENGTH_LONG)
-                                .setAction("撤销", new View.OnClickListener() {
+                        sweetAlertDialog.setTitleText("事件已删除！")
+                                .setContentText("如果反悔请点击下方按钮撤销")
+                                .setConfirmText("好的没事了")
+                                .setConfirmClickListener(null)
+                                .setCancelText("快撤销！")
+                                .showCancelButton(true)
+                                .setCancelClickListener(new SweetAlertDialog.OnSweetClickListener() {
                                     @Override
-                                    public void onClick(View view) {
+                                    public void onClick(SweetAlertDialog sweetAlertDialog) {
                                         restoreItem();
-                                        Toast.makeText(mContext, "已撤销", Toast.LENGTH_SHORT).show();
+                                        sweetAlertDialog.dismissWithAnimation();
+                                        Toast.makeText(mActivity, "已撤销", Toast.LENGTH_SHORT).show();
                                     }
                                 })
-                                .show();
-                    }
-                })
-                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        notifyItemRangeChanged(0, mBacklogList.size());
+                                .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
                     }
                 });
-        builder.show();
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.show();
+        notifyItemRangeChanged(0, mBacklogList.size());
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
@@ -93,8 +100,8 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
         }
     }
 
-    public BacklogAdapter(Context context,View view, List<Backlog> backlogList, boolean isUndone) {
-        mContext = context;
+    public BacklogAdapter(Activity activity,View view, List<Backlog> backlogList, boolean isUndone) {
+        mActivity = activity;
         mView = view;
         mBacklogList = backlogList;
         this.isUndone = isUndone;
@@ -107,16 +114,24 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
                 .inflate(R.layout.backlog_item, parent, false);
         final ViewHolder holder = new ViewHolder(view);
 
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                VibrateUtil.vibrate(mActivity, 100);
+                return true;
+            }
+        });
+
         //set the item itself clickable
         holder.backlogView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 int position = holder.getAdapterPosition();
                 if (position != -1) {
-                    Backlog backlog = mBacklogList.get(position);
-                    clickOnButton(holder.radioButton, backlog);
+                    Backlog backlogInDataBase = getBacklogInDataBase(mBacklogList.get(position));
+                    clickOnButton(holder.radioButton, backlogInDataBase);
 
-                    checkItem(backlog, position);
+                    checkItem(backlogInDataBase, position);
                 }
             }
         });
@@ -127,17 +142,17 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
             public void onClick(View view) {
                 int position = holder.getAdapterPosition();
                 if (position != -1) {
-                    Backlog backlog = mBacklogList.get(position);
+                    Backlog backlogInDataBase = getBacklogInDataBase(mBacklogList.get(position));
                     if (holder.isFirstClick) {
-                        backlog.setDone(true);
-                        backlog.save();
+                        backlogInDataBase.setDone(true);
+                        backlogInDataBase.save();
                         holder.isFirstClick = false;
                     } else {
-                        clickOnButton(holder.radioButton, backlog);
+                        clickOnButton(holder.radioButton, backlogInDataBase);
                         holder.isFirstClick = true;
                     }
 
-                    checkItem(backlog, position);
+                    checkItem(backlogInDataBase, position);
                 }
             }
         });
@@ -155,6 +170,10 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
     @Override
     public int getItemCount() {
         return mBacklogList.size();
+    }
+
+    private Backlog getBacklogInDataBase(Backlog backlogInList) {
+        return LitePal.find(Backlog.class, backlogInList.getId());
     }
 
     /**
