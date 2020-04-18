@@ -87,14 +87,12 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        View backlogView;
         RadioButton radioButton;
         TextView backlogTextView;
         boolean isFirstClick = true;
 
         public ViewHolder(View view) {
             super(view);
-            backlogView = view;
             radioButton = view.findViewById(R.id.backlog_radio_button);
             backlogTextView = view.findViewById(R.id.backlog_name_text);
         }
@@ -123,7 +121,7 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
         });
 
         //set the item itself clickable
-        holder.backlogView.setOnClickListener(new View.OnClickListener() {
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 int position = holder.getAdapterPosition();

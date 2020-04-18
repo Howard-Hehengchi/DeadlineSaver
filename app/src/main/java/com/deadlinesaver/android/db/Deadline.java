@@ -14,12 +14,15 @@ public class Deadline extends LitePalSupport implements Serializable {
 
     private long totalTime;
 
+    private String ddlContent;
+
     private boolean isDone = false;
 
     public Deadline(String ddlName, long dueTime, long totalTime) {
         this.ddlName = ddlName;
         this.dueTime = dueTime;
         this.totalTime = totalTime;
+        ddlContent = "";
     }
 
     public Deadline(String ddlName, long dueTime, long totalTime, boolean isDone) {
@@ -27,6 +30,7 @@ public class Deadline extends LitePalSupport implements Serializable {
         this.dueTime = dueTime;
         this.totalTime = totalTime;
         this.isDone = isDone;
+        ddlContent = "";
     }
 
     public int getId() {
@@ -67,5 +71,13 @@ public class Deadline extends LitePalSupport implements Serializable {
 
     public void setTotalTime(long totalTime) {
         this.totalTime = totalTime;
+    }
+
+    public String getDdlContent() {
+        return ddlContent;
+    }
+
+    public void setDdlContent(String ddlContent) {
+        this.ddlContent = ddlContent;
     }
 }

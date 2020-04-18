@@ -105,7 +105,7 @@
             android:layout_weight="1"
             android:gravity="center"
             android:text="确认"
-            android:textColor="#0032E8"
+            android:textColor="@color/confirmTextColor"
             android:background="#F4FFFE"/>
     </LinearLayout>
 

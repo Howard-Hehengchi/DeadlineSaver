@@ -19,12 +19,14 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.deadlinesaver.android.R;
+import com.deadlinesaver.android.activities.EditDeadlineActivity;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.db.Deadline;
 import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.util.Utility;
+import com.deadlinesaver.android.util.VibrateUtil;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.litepal.LitePal;
@@ -125,6 +127,27 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
                 .inflate(R.layout.deadline_item, parent, false);
         final ViewHolder holder = new ViewHolder(view);
 
+        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                VibrateUtil.vibrate(mActivity, 100);
+                return true;
+            }
+        });
+
+        holder.itemView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int position = holder.getAdapterPosition();
+                if (position >= 0) {
+                    Deadline deadline = LitePal.find(Deadline.class, mDeadlineList.get(position).getId());
+                    UndoneFragment.removeBacklogOfName(deadline.getDdlName());
+                    DoneFragment.removeBacklogOfName(deadline.getDdlName());
+                    EditDeadlineActivity.startActivity(mActivity, deadline);
+                }
+            }
+        });
+
         holder.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -135,7 +158,8 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
                         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams)
                                 holder.deadlineTimeTextView.getLayoutParams();
                         int progress = holder.seekBar.getProgress();
-                        int textWidth = holder.deadlineTimeTextView.getWidth();
+                        String text = holder.deadlineTimeTextView.getText().toString();
+                        float textWidth = holder.deadlineTimeTextView.getPaint().measureText(text);
 
                         //计算理论上的左边距
                         int newLeftMargin = (int) ((maxWidth - textWidth) * (float) progress / 100) - (int) (textWidth / 3.6f);
@@ -152,7 +176,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
                             params.leftMargin = newLeftMargin;
                             isLeftMarginFixed = false;
                         }
-                        Log.i("TextWidth", "run: " + textWidth);
+
                         holder.deadlineTimeTextView.setLayoutParams(params);
                     }
                 });
@@ -211,7 +235,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Deadline deadline = mDeadlineList.get(position);
+        Deadline deadline = LitePal.find(Deadline.class, mDeadlineList.get(position).getId());
         holder.radioButton.setChecked(false);
 
         String timeText = getTimeText(deadline.getDueTime());
@@ -222,6 +246,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
             deadlineName += timeOverNameSuffix;
         }
         holder.deadlineNameTextView.setText(deadlineName);
+
         //获取时间进度
         long timeLeft = deadline.getDueTime() - Utility.getCalendar().getTimeInMillis() / Utility.millisecondsInMinute;
         int progress = (int) (((deadline.getTotalTime() - timeLeft) / (float) deadline.getTotalTime()) * 100);
@@ -258,7 +283,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
 
     private void removeItem(int position) {
         //储存被删除DDL的数据
-        Deadline lastDeadline = mDeadlineList.get(position);
+        Deadline lastDeadline = LitePal.find(Deadline.class, mDeadlineList.get(position).getId());
         lastDeadlineName = lastDeadline.getDdlName();
         lastDeadlineDueTime = lastDeadline.getDueTime();
         lastDeadlineTotalTime = lastDeadline.getTotalTime();

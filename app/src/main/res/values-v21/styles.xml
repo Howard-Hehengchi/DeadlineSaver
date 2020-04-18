@@ -2,7 +2,11 @@
 <resources>
 
     <style name="MainActivityTheme" parent="AppTheme">
-        <item name="android:statusBarColor">@android:color/holo_blue_bright</item>
+        <item name="android:statusBarColor">@color/themeColor</item>
+    </style>
+
+    <style name="EditDeadlineActivityTheme" parent="AppTheme">
+        <item name="android:statusBarColor">@color/themeColor</item>
     </style>
 
 </resources>

@@ -4,4 +4,5 @@
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="themeColor">#09DAFF</color>
+    <color name="confirmTextColor">#0032E8</color>
 </resources>

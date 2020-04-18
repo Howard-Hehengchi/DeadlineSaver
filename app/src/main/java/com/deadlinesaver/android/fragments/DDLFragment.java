@@ -24,6 +24,8 @@ import com.deadlinesaver.android.recyclerview.DeadlineAdapter;
 import com.deadlinesaver.android.recyclerview.ItemTouchCallback;
 import com.deadlinesaver.android.util.Utility;
 
+import org.litepal.LitePal;
+
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.List;
@@ -97,7 +99,6 @@ public class DDLFragment extends Fragment {
                                         } else {
                                             viewHolder.seekBar.setProgress(progress);
                                         }
-                                        Log.i(TAG, "UIChange: " + progress);
                                     }
                                 });
                             }
@@ -118,7 +119,14 @@ public class DDLFragment extends Fragment {
         return view;
     }
 
-    private static final String TAG = "DDLFragment";
+    @Override
+    public void onStart() {
+        super.onStart();
+        deadlineList.clear();
+        deadlineList.addAll(LitePal.findAll(Deadline.class));
+        recyclerView.getAdapter().notifyDataSetChanged();
+        recyclerView.getAdapter().notifyItemRangeChanged(0, deadlineList.size());
+    }
 
     @Override
     public void onDestroy() {
@@ -136,6 +144,7 @@ public class DDLFragment extends Fragment {
         }
         deadlineList.add(deadline);
         if (!isInitialize) {
+            recyclerView.getAdapter().notifyDataSetChanged();
             recyclerView.getAdapter().notifyItemRangeChanged(0, deadlineList.size());
         }
     }
