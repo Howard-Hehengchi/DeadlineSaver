@@ -25,6 +25,7 @@ import com.deadlinesaver.android.db.Deadline;
 import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
+import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 import com.deadlinesaver.android.util.VibrateUtil;
 import com.google.android.material.snackbar.Snackbar;
@@ -88,7 +89,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
                                     public void onClick(SweetAlertDialog sweetAlertDialog) {
                                         restoreItem(lastDeadlineDueTime);
                                         sweetAlertDialog.dismissWithAnimation();
-                                        Toast.makeText(mActivity, "已撤销", Toast.LENGTH_SHORT).show();
+                                        ToastUtil.showToast(mActivity, "已撤销", Toast.LENGTH_SHORT);
                                     }
                                 })
                                 .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
@@ -130,7 +131,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                VibrateUtil.vibrate(mActivity, 100);
+                VibrateUtil.vibrate(mActivity, 50);
                 return true;
             }
         });

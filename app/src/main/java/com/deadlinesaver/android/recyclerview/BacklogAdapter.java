@@ -1,11 +1,6 @@
 package com.deadlinesaver.android.recyclerview;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.os.Build;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +15,7 @@ import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.fragments.DoneFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
+import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.VibrateUtil;
 
 import org.litepal.LitePal;
@@ -32,7 +28,6 @@ import cn.pedant.SweetAlert.SweetAlertDialog;
 public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder> {
 
     private Activity mActivity;
-    private View mView;
     private List<Backlog> mBacklogList;
     private boolean isUndone = true;
 
@@ -40,7 +35,6 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
      * 最近被删除的待办事项的各项数据（用于复原
      */
     private String lastBacklogName;
-    private int lastBacklogId;
     private boolean lastBacklogIsDone;
 
     @Override
@@ -75,7 +69,7 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
                                     public void onClick(SweetAlertDialog sweetAlertDialog) {
                                         restoreItem();
                                         sweetAlertDialog.dismissWithAnimation();
-                                        Toast.makeText(mActivity, "已撤销", Toast.LENGTH_SHORT).show();
+                                        ToastUtil.showToast(mActivity, "已撤销", Toast.LENGTH_SHORT);
                                     }
                                 })
                                 .changeAlertType(SweetAlertDialog.SUCCESS_TYPE);
@@ -100,7 +94,6 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
 
     public BacklogAdapter(Activity activity,View view, List<Backlog> backlogList, boolean isUndone) {
         mActivity = activity;
-        mView = view;
         mBacklogList = backlogList;
         this.isUndone = isUndone;
     }
@@ -115,7 +108,7 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
         holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
-                VibrateUtil.vibrate(mActivity, 100);
+                VibrateUtil.vibrate(mActivity, 50);
                 return true;
             }
         });
@@ -218,7 +211,6 @@ public class BacklogAdapter extends CustomBaseAdapter<BacklogAdapter.ViewHolder>
         //储存被删除事件的数据
         Backlog lastBacklog = mBacklogList.get(position);
         lastBacklogName = lastBacklog.getBacklogName();
-        lastBacklogId = lastBacklog.getId();
         lastBacklogIsDone = lastBacklog.isDone();
         //删除事件
         mBacklogList.remove(position);

@@ -32,6 +32,7 @@ import com.deadlinesaver.android.db.Deadline;
 import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.util.DensityUtil;
+import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
@@ -46,7 +47,7 @@ public class EditDeadlineActivity extends BaseActivity {
     private final static String deadlineExtraName = "Deadline";
 
     private final static String dateStringFormat = "%d-%d-%d";
-    private final static String timeStringFormat = "%d:%d";
+    private final static String timeStringFormat = "%02d:%02d";
 
     private Toolbar toolbar;
 
@@ -90,7 +91,7 @@ public class EditDeadlineActivity extends BaseActivity {
                                 @Override
                                 public void onDateSet(DatePicker datePicker, final int year_new, final int month_new, final int dayOfMonth_new) {
                                     if (!isValid(year_new, month_new, dayOfMonth_new)) {
-                                        Toast.makeText(EditDeadlineActivity.this, "请选择一个有效日期！", Toast.LENGTH_SHORT).show();
+                                        ToastUtil.showToast(EditDeadlineActivity.this, "请选择一个有效日期！", Toast.LENGTH_SHORT);
                                     } else {
                                         due_year = year_new;
                                         due_month = month_new;
@@ -118,7 +119,7 @@ public class EditDeadlineActivity extends BaseActivity {
                     @Override
                     public void onTimeSet(TimePicker timePicker, final int hourOfDay_new, final int minute_new) {
                         if (!isValid(hourOfDay_new, minute_new)) {
-                            Toast.makeText(EditDeadlineActivity.this, "请选择一个有效时间！", Toast.LENGTH_SHORT).show();
+                            ToastUtil.showToast(EditDeadlineActivity.this, "请选择一个有效时间！", Toast.LENGTH_SHORT);
                         } else {
                             due_hour = hourOfDay_new;
                             due_minute = minute_new;

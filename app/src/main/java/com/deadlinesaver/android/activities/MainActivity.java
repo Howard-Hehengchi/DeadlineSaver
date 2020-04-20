@@ -1,6 +1,7 @@
 package com.deadlinesaver.android.activities;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
@@ -11,6 +12,8 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
@@ -31,6 +34,7 @@ import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
 import com.deadlinesaver.android.util.HttpUtil;
 import com.deadlinesaver.android.UI.NoScrollViewPager;
+import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
@@ -48,8 +52,9 @@ import okhttp3.Response;
 
 public class MainActivity extends BaseActivity {
 
-    private final static String spName = "UpdateTime";
+    private final static String spName = "MainActivitySP";
     private final static String lastUpdateTimeName = "lastUpdateTime";
+    private final static String sortWayName = "sortWay";
 
     private final static String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
     private final static String oldVersionApkName_1 = "/TODOList.apk";
@@ -62,6 +67,10 @@ public class MainActivity extends BaseActivity {
     private Toolbar toolbar;
     private List<String> titles = new ArrayList<>();
     private DraggableFab fab;
+
+    private MenuItem ddlSortByNameItem;
+    private MenuItem ddlSortByTimeItem;
+    public static SortWay sortWay;
 
     /**
      * 用于记录当前fragment类型，便于弹窗事件的触发
@@ -77,6 +86,8 @@ public class MainActivity extends BaseActivity {
         Calendar todayCalendar = Utility.getTodayCalendar();
         SharedPreferences sharedPreferences = getSharedPreferences(spName, Context.MODE_PRIVATE);
         long lastUpdateTime = sharedPreferences.getLong(lastUpdateTimeName, todayCalendar.getTimeInMillis() - 1);
+        //顺便也把用户指定的排序顺序给取出来
+        sortWay = SortWay.values()[sharedPreferences.getInt(sortWayName, SortWay.SortByTime.ordinal())];
         if (lastUpdateTime <= todayCalendar.getTimeInMillis()) {
             //如果上次更新时间早于今日00：00的毫秒数，即今日尚未更新
             //进行更新操作
@@ -136,18 +147,62 @@ public class MainActivity extends BaseActivity {
         }
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_activity_toolbar, menu);
+        ddlSortByNameItem = menu.findItem(R.id.ddl_sort_by_name);
+        ddlSortByTimeItem = menu.findItem(R.id.ddl_sort_by_time);
+
+        ddlSortByNameItem.setVisible(false);
+        ddlSortByTimeItem.setVisible(false);
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.ddl_sort_by_name:
+                ddlSortByNameItem.setVisible(false);
+                ddlSortByTimeItem.setVisible(true);
+                sortWay = SortWay.SortByTime;
+                ToastUtil.showToast(MainActivity.this, "按时间排序", Toast.LENGTH_SHORT);
+                break;
+            case R.id.ddl_sort_by_time:
+                ddlSortByTimeItem.setVisible(false);
+                ddlSortByNameItem.setVisible(true);
+                sortWay = SortWay.SortByName;
+                ToastUtil.showToast(MainActivity.this, "按名称排序", Toast.LENGTH_SHORT);
+                break;
+        }
+        DDLFragment.sortDDL();
+
+        //保存用户指定的排序方式
+        SharedPreferences.Editor editor = getSharedPreferences(spName, Context.MODE_PRIVATE).edit();
+        editor.putInt(sortWayName, sortWay.ordinal());
+        editor.apply();
+
+        return true;
+    }
+
     /**
      * 所有初始化操作
      */
     private void initOperations() {
-        toolbar = (Toolbar) findViewById(R.id.toolBar);
+        toolbar = findViewById(R.id.toolBar);
         setSupportActionBar(toolbar);
+
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_open_drawer);
+        }
 
         initTitles();
 
         initBottomNavigationView();
 
-        fab = (DraggableFab) findViewById(R.id.fab);
+        fab = findViewById(R.id.fab);
         //添加待办事项
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -187,8 +242,8 @@ public class MainActivity extends BaseActivity {
      * 底部导航栏的初始化
      */
     private void initBottomNavigationView() {
-        bottomNavigationView = (BottomNavigationView) findViewById(R.id.bottom_navigation_view);
-        noScrollViewPager = (NoScrollViewPager) findViewById(R.id.no_scroll_view_pager);
+        bottomNavigationView = findViewById(R.id.bottom_navigation_view);
+        noScrollViewPager = findViewById(R.id.no_scroll_view_pager);
 
         fragmentList.add(new ToDoListFragment());
         fragmentList.add(new DDLFragment());
@@ -216,17 +271,34 @@ public class MainActivity extends BaseActivity {
                         toolbar.setTitle(titles.get(0));
                         currentFragment = FragmentType.BacklogFragment;
                         fab.show();
+                        //隐藏排序按钮
+                        ddlSortByNameItem.setVisible(false);
+                        ddlSortByTimeItem.setVisible(false);
                         return true;
                     case R.id.item_all_ddl:
                         noScrollViewPager.setCurrentItem(1);
                         toolbar.setTitle(titles.get(1));
                         currentFragment = FragmentType.DeadlineFragment;
                         fab.show();
+                        //显示排序按钮
+                        switch (sortWay) {
+                            case SortByName:
+                                ddlSortByNameItem.setVisible(true);
+                                ddlSortByTimeItem.setVisible(false);
+                                break;
+                            case SortByTime:
+                                ddlSortByTimeItem.setVisible(true);
+                                ddlSortByNameItem.setVisible(false);
+                                break;
+                        }
                         return true;
                     case R.id.item_personalized_settings:
                         noScrollViewPager.setCurrentItem(2);
                         toolbar.setTitle(titles.get(2));
                         fab.hide();
+                        //隐藏排序按钮
+                        ddlSortByNameItem.setVisible(false);
+                        ddlSortByTimeItem.setVisible(false);
                         return true;
                 }
                 return false;
@@ -269,8 +341,7 @@ public class MainActivity extends BaseActivity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(MainActivity.this,
-                                "获取更新出错", Toast.LENGTH_SHORT).show();
+                        ToastUtil.showToast(MainActivity.this, "获取更新出错", Toast.LENGTH_SHORT);
                     }
                 });
             }
@@ -283,8 +354,8 @@ public class MainActivity extends BaseActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toast.makeText(MainActivity.this, "服务器还没开……",
-                                    Toast.LENGTH_SHORT).show();
+                            ToastUtil.showToast(MainActivity.this, "服务器还没开……",
+                                    Toast.LENGTH_SHORT);
                         }
                     });
                 } else {
@@ -298,10 +369,10 @@ public class MainActivity extends BaseActivity {
                                 if (versionCode < apkInfo.versionCode) {
                                     updateNewApk();
                                 } else {
-                                    Toast.makeText(MainActivity.this, "当前已是最新版本", Toast.LENGTH_LONG).show();
+                                    ToastUtil.showToast(MainActivity.this, "当前已是最新版本", Toast.LENGTH_LONG);
                                 }
                             } catch (PackageManager.NameNotFoundException e) {
-                                Toast.makeText(MainActivity.this, "出错...", Toast.LENGTH_LONG).show();
+                                ToastUtil.showToast(MainActivity.this, "出错...", Toast.LENGTH_LONG);
                             }
                         }
                     });
@@ -353,8 +424,19 @@ public class MainActivity extends BaseActivity {
                 .download();
     }
 
+    /**
+     * 用于指示当前Fragment类型
+     */
     private enum FragmentType {
         BacklogFragment,
         DeadlineFragment
+    }
+
+    /**
+     * 用于指示当前排序方式
+     */
+    public enum SortWay {
+        SortByName,
+        SortByTime
     }
 }

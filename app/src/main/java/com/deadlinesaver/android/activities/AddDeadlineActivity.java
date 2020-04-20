@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Deadline;
+import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 
 import java.util.Calendar;
@@ -127,7 +128,7 @@ public class AddDeadlineActivity extends BaseActivity{
                         setResult(RESULT_OK, intent);
                         finish();
                     } else {
-                        Toast.makeText(AddDeadlineActivity.this, "请给DDL设置一个有效时间！", Toast.LENGTH_LONG).show();
+                        ToastUtil.showToast(AddDeadlineActivity.this, "请给DDL设置一个有效时间！", Toast.LENGTH_LONG);
                         refreshTime();
                         runOnUiThread(new Runnable() {
                             @Override
@@ -139,7 +140,7 @@ public class AddDeadlineActivity extends BaseActivity{
                         saveLastTime(year, month, dayOfMonth, hourOfDay, minute);
                     }
                 } else {
-                    Toast.makeText(AddDeadlineActivity.this, "请给DDL起一个名字！", Toast.LENGTH_LONG).show();
+                    ToastUtil.showToast(AddDeadlineActivity.this, "请给DDL起一个名字！", Toast.LENGTH_LONG);
                 }
             }
         });

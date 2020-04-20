@@ -26,10 +26,17 @@ import com.deadlinesaver.android.util.Utility;
 
 import org.litepal.LitePal;
 
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.stream.Collector;
+
+import static com.deadlinesaver.android.activities.MainActivity.sortWay;
 
 public class DDLFragment extends Fragment {
 
@@ -124,8 +131,7 @@ public class DDLFragment extends Fragment {
         super.onStart();
         deadlineList.clear();
         deadlineList.addAll(LitePal.findAll(Deadline.class));
-        recyclerView.getAdapter().notifyDataSetChanged();
-        recyclerView.getAdapter().notifyItemRangeChanged(0, deadlineList.size());
+        sortDDL();
     }
 
     @Override
@@ -142,11 +148,77 @@ public class DDLFragment extends Fragment {
             if (deadlineInList.getDdlName().equals(deadline.getDdlName()))
                 return;
         }
-        deadlineList.add(deadline);
+
+        //在添加元素时按指定顺序插入
+        int index = 0;
+        int arrayLength = deadlineList.size();
+            switch (sortWay) {
+                case SortByName:
+                    Collator instance = Collator.getInstance(Locale.CHINA);
+                    while (index <= arrayLength - 1 && instance.compare(deadlineList.get(index).getDdlName(), deadline.getDdlName()) < 0) {
+                        index++;
+                    }
+                    break;
+                case SortByTime:
+                    while (index <= arrayLength - 1 && deadlineList.get(index).getDueTime() < deadline.getDueTime()) {
+                        index++;
+                    }
+                    break;
+            }
+            if (index > deadlineList.size() - 1) {
+                deadlineList.add(deadline);
+            } else {
+                deadlineList.add(index, deadline);
+            }
+
+
         if (!isInitialize) {
             recyclerView.getAdapter().notifyDataSetChanged();
             recyclerView.getAdapter().notifyItemRangeChanged(0, deadlineList.size());
         }
+    }
+
+    public static void sortDDL() {
+        if (deadlineList.size() <= 1) {
+            return;
+        }
+
+        List<Deadline> tempDeadlineList = new ArrayList<>(deadlineList);
+        int arrayLength = tempDeadlineList.size();
+        int minIndex;
+        switch (sortWay) {
+            case SortByName:
+                Collator instance = Collator.getInstance(Locale.CHINA);
+                for (int i = 0; i < arrayLength - 1; i++) {
+                    minIndex = i;
+                    for (int j = i + 1; j < arrayLength; j++) {
+                        if (instance.compare(tempDeadlineList.get(j).getDdlName(), tempDeadlineList.get(minIndex).getDdlName()) < 0) {
+                            minIndex = j;
+                        }
+                    }
+                    if (minIndex > i) {
+                        Collections.swap(tempDeadlineList, i, minIndex);
+                    }
+                }
+                break;
+            case SortByTime:
+                for (int i = 0; i < arrayLength - 1; i++) {
+                    minIndex = i;
+                    for (int j = i + 1; j < arrayLength; j++) {
+                        if (tempDeadlineList.get(j).getDueTime() < tempDeadlineList.get(minIndex).getDueTime()) {
+                            minIndex = j;
+                        }
+                    }
+                    if (minIndex > i) {
+                        Collections.swap(tempDeadlineList, i, minIndex);
+                    }
+                }
+                break;
+        }
+
+        deadlineList.clear();
+        deadlineList.addAll(tempDeadlineList);
+        recyclerView.getAdapter().notifyDataSetChanged();
     }
 
     /**
