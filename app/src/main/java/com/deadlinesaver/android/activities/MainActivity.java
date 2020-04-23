@@ -12,7 +12,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -32,6 +31,7 @@ import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.ToDoListFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
+import com.deadlinesaver.android.services.DeadlineAlarmService;
 import com.deadlinesaver.android.util.HttpUtil;
 import com.deadlinesaver.android.UI.NoScrollViewPager;
 import com.deadlinesaver.android.util.ToastUtil;
@@ -112,6 +112,10 @@ public class MainActivity extends BaseActivity {
         //使DDLFragment开始计时
         DDLFragment.hasCreatedTimer = false;
 
+        //启动定时提醒服务
+        Intent intent = new Intent(this, DeadlineAlarmService.class);
+        startService(intent);
+
         checkUpdate();
 
         //删除旧版本安装包
@@ -141,6 +145,10 @@ public class MainActivity extends BaseActivity {
                         backlog.save();
                         UndoneFragment.addBacklog(backlog, false);
                     }
+
+                    //强迫服务做一次检查
+                    Intent intent = new Intent(this, DeadlineAlarmService.class);
+                    startService(intent);
                 }
             default:
                 break;
@@ -223,10 +231,10 @@ public class MainActivity extends BaseActivity {
         });
         fab.show();
 
+        PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
+
         initBacklogs();
         initDeadlines();
-
-        PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
     }
 
     /**

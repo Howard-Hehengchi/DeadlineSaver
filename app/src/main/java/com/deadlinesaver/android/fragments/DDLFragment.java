@@ -131,6 +131,7 @@ public class DDLFragment extends Fragment {
         super.onStart();
         deadlineList.clear();
         deadlineList.addAll(LitePal.findAll(Deadline.class));
+        recyclerView.getAdapter().notifyDataSetChanged();
         sortDDL();
     }
 
@@ -219,6 +220,47 @@ public class DDLFragment extends Fragment {
         deadlineList.clear();
         deadlineList.addAll(tempDeadlineList);
         recyclerView.getAdapter().notifyDataSetChanged();
+    }
+
+    /**
+     * 找到最近的需要提醒的DDL（此DDL是从数据库中找到的）
+     * @return 若有已过提前提醒但未过期的DDL，则返回该DDL；若无则返回提醒时间最早的DDL。
+     */
+    public static Deadline getDeadlineToAlarm() {
+        //将要被返回的DDL
+        Deadline deadlineToAlarm = null;
+
+        List<Deadline> deadlineListOfDataBase = LitePal.findAll(Deadline.class);
+        //筛选出尚未过期的DDL
+        List<Deadline> validDeadline = new ArrayList<>();
+        for (Deadline deadline : deadlineListOfDataBase) {
+            if (!deadline.isAlarmed() && deadline.getDueTime() > Utility.getCalendar().getTimeInMillis() / Utility.millisecondsInMinute) {
+                validDeadline.add(deadline);
+            }
+        }
+
+        //筛选出提醒时间已过的DDL
+        List<Deadline> alarmTimePastDeadlines = new ArrayList<>();
+        for (Deadline deadline : validDeadline) {
+            long alarmTime = deadline.getDueTime() - deadline.getAlarmTimeAhead();
+            if (alarmTime < Utility.getCalendar().getTimeInMillis() / Utility.millisecondsInMinute) {
+                alarmTimePastDeadlines.add(deadline);
+            }
+        }
+
+        //选择应该寻找的列表
+        List<Deadline> chosenList = alarmTimePastDeadlines.size() > 0 ? alarmTimePastDeadlines : validDeadline;
+        //寻找提醒时间最早的DDL
+        long earliestTime = Long.MAX_VALUE;
+        for (Deadline deadline : chosenList) {
+            long alarmTime = deadline.getDueTime() - deadline.getAlarmTimeAhead();
+            if (alarmTime < earliestTime) {
+                earliestTime = alarmTime;
+                deadlineToAlarm = deadline;
+            }
+        }
+
+        return deadlineToAlarm;
     }
 
     /**

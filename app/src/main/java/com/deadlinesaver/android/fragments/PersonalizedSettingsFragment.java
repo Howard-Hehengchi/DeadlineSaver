@@ -1,21 +1,21 @@
 package com.deadlinesaver.android.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ListView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.deadlinesaver.android.R;
-import com.deadlinesaver.android.listview.Setting;
-import com.deadlinesaver.android.listview.SettingAdapter;
+import com.deadlinesaver.android.recyclerview.Setting;
+import com.deadlinesaver.android.recyclerview.SettingAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,19 +29,27 @@ public class PersonalizedSettingsFragment extends Fragment {
      */
     private static List<String> optionNames = new ArrayList<>();
 
+    private static final Setting.SettingType settingTypeArray[] =
+            {Setting.SettingType.Switch,
+                    Setting.SettingType.Switch,
+                    Setting.SettingType.Switch,
+                    Setting.SettingType.Value};
+
     private static final String spName = "PersonalSettings";
 
-    private ListView listView;
-    private SettingAdapter adapter;
+    private RecyclerView recyclerView;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.personalized_settings_fragment, container, false);
 
-        listView = view.findViewById(R.id.personal_settings_list_view);
-        adapter = new SettingAdapter(getContext(), R.layout.personal_settings_item, settings);
-        listView.setAdapter(adapter);
+        recyclerView = view.findViewById(R.id.personal_settings_recycler_view);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
+        recyclerView.setLayoutManager(layoutManager);
+
+        SettingAdapter adapter = new SettingAdapter(getActivity(), settings);
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -56,7 +64,14 @@ public class PersonalizedSettingsFragment extends Fragment {
         Setting tempSetting;
         for (int index = 0; index < settings.size(); index++) {
             tempSetting = settings.get(index);
-            editor.putBoolean(tempSetting.getName(), tempSetting.isOn());
+            switch (tempSetting.getType()) {
+                case Switch:
+                    editor.putBoolean(tempSetting.getName(), tempSetting.isOn());
+                    break;
+                case Value:
+                    editor.putInt(tempSetting.getName(), tempSetting.getValue());
+                    break;
+            }
         }
         editor.apply();
     }
@@ -75,10 +90,19 @@ public class PersonalizedSettingsFragment extends Fragment {
         initOptionNames();
 
         SharedPreferences sp = context.getSharedPreferences(spName, Context.MODE_PRIVATE);
-        List<Boolean> optionStatuses = new ArrayList<>();
+
         for (int index = 0; index < optionNames.size(); index++) {
-            optionStatuses.add(sp.getBoolean(optionNames.get(index), false));
-            settings.add(new Setting(optionNames.get(index), optionStatuses.get(index)));
+            String settingName = optionNames.get(index);
+            switch (settingTypeArray[index]) {
+                case Switch:
+                    boolean isOn = sp.getBoolean(settingName, false);
+                    settings.add(new Setting(settingName, isOn));
+                    break;
+                case Value:
+                    int value = sp.getInt(settingName, 60);
+                    settings.add(new Setting(settingName, value));
+                    break;
+            }
         }
     }
 
@@ -87,20 +111,38 @@ public class PersonalizedSettingsFragment extends Fragment {
      */
     private static void initOptionNames() {
         optionNames.add("悬浮按钮两侧吸附");
+        optionNames.add("提醒时响铃");
+        optionNames.add("提醒时震动");
+        optionNames.add("默认提醒提前时间");
     }
 
-    public static void setCertainSetting(SettingType type, boolean settingStatus) {
-        switch (type) {
+    public static void setCertainSetting(SettingName name, Object settingParam) {
+        switch (name) {
             case isDoubleSidesAttach:
-                settings.get(0).setOn(settingStatus);
+                settings.get(0).setOn((boolean) settingParam);
+                break;
+            case ringWhenNotification:
+                settings.get(1).setOn((boolean) settingParam);
+                break;
+            case vibrateWhenNotification:
+                settings.get(2).setOn((boolean) settingParam);
+                break;
+            case defaultAlarmTimeAhead:
+                settings.get(3).setValue((int) settingParam);
                 break;
         }
     }
 
-    public static boolean getCertainSetting(SettingType type) {
-        switch (type) {
+    public static Object getCertainSetting(SettingName name) {
+        switch (name) {
             case isDoubleSidesAttach:
                 return settings.get(0).isOn();
+            case ringWhenNotification:
+                return settings.get(1).isOn();
+            case vibrateWhenNotification:
+                return settings.get(2).isOn();
+            case defaultAlarmTimeAhead:
+                return settings.get(3).getValue();
         }
         return false;
     }
@@ -109,7 +151,10 @@ public class PersonalizedSettingsFragment extends Fragment {
      * 用户设置各选项，按顺序排列
      * TODO:如需添加设置选项必须在此处声明
      */
-    public enum SettingType {
-        isDoubleSidesAttach
+    public enum SettingName {
+        isDoubleSidesAttach,
+        ringWhenNotification,
+        vibrateWhenNotification,
+        defaultAlarmTimeAhead //默认以秒为单位
     }
 }

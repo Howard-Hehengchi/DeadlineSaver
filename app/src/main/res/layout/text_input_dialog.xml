@@ -14,13 +14,14 @@
         android:paddingTop="15dp"
         android:paddingBottom="15dp">
         <TextView
+            android:id="@+id/text_input_dialog_title_text_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#000"
             android:textSize="20sp"
             android:text="DDL名称" />
         <EditText
-            android:id="@+id/edit_deadline_name_dialog_edit_text"
+            android:id="@+id/text_input_dialog_edit_text"
             android:layout_marginTop="5dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,7 +31,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <TextView
-                android:id="@+id/edit_deadline_name_dialog_cancel_text_view"
+                android:id="@+id/text_input_dialog_cancel_text_view"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -43,7 +44,7 @@
                 android:layout_height="match_parent"
                 android:background="#9A9A9A" />
             <TextView
-                android:id="@+id/edit_deadline_name_dialog_confirm_text_view"
+                android:id="@+id/text_input_dialog_confirm_text_view"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"

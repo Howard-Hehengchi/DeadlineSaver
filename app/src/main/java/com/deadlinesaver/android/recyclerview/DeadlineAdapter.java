@@ -302,7 +302,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
 
     private void restoreItem(long dueTime) {
         Deadline lastDeadline = new Deadline(lastDeadlineName, dueTime, lastDeadlineTotalTime);
-        mDeadlineList.add(lastDeadline);
+        DDLFragment.addDeadline(lastDeadline, false);
         notifyItemRangeChanged(0, mDeadlineList.size());
         lastDeadline.save();
 

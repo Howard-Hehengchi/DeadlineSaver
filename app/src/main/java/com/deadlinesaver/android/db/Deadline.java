@@ -1,5 +1,8 @@
 package com.deadlinesaver.android.db;
 
+import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
+import com.deadlinesaver.android.util.Utility;
+
 import org.litepal.crud.LitePalSupport;
 
 import java.io.Serializable;
@@ -14,14 +17,21 @@ public class Deadline extends LitePalSupport implements Serializable {
 
     private long totalTime;
 
+    private long alarmTimeAhead;
+
     private String ddlContent;
 
     private boolean isDone = false;
+
+    private boolean isAlarmed = false;
 
     public Deadline(String ddlName, long dueTime, long totalTime) {
         this.ddlName = ddlName;
         this.dueTime = dueTime;
         this.totalTime = totalTime;
+        alarmTimeAhead = (int)
+                PersonalizedSettingsFragment.getCertainSetting
+                        (PersonalizedSettingsFragment.SettingName.defaultAlarmTimeAhead);
         ddlContent = "";
     }
 
@@ -30,6 +40,9 @@ public class Deadline extends LitePalSupport implements Serializable {
         this.dueTime = dueTime;
         this.totalTime = totalTime;
         this.isDone = isDone;
+        alarmTimeAhead = (int)
+                PersonalizedSettingsFragment.getCertainSetting
+                        (PersonalizedSettingsFragment.SettingName.defaultAlarmTimeAhead);
         ddlContent = "";
     }
 
@@ -79,5 +92,21 @@ public class Deadline extends LitePalSupport implements Serializable {
 
     public void setDdlContent(String ddlContent) {
         this.ddlContent = ddlContent;
+    }
+
+    public long getAlarmTimeAhead() {
+        return alarmTimeAhead;
+    }
+
+    public void setAlarmTimeAhead(long alarmTimeAhead) {
+        this.alarmTimeAhead = alarmTimeAhead;
+    }
+
+    public boolean isAlarmed() {
+        return isAlarmed;
+    }
+
+    public void setAlarmed(boolean isAlarmed) {
+        this.isAlarmed = isAlarmed;
     }
 }

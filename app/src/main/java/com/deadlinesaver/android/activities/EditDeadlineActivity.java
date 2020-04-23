@@ -4,21 +4,15 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
 import android.app.DatePickerDialog;
-import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.Display;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -26,21 +20,29 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.bigkoo.pickerview.builder.OptionsPickerBuilder;
+import com.bigkoo.pickerview.listener.OnOptionsSelectListener;
+import com.bigkoo.pickerview.view.OptionsPickerView;
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.db.Deadline;
-import com.deadlinesaver.android.fragments.DDLFragment;
+import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
-import com.deadlinesaver.android.util.DensityUtil;
+import com.deadlinesaver.android.services.DeadlineAlarmService;
 import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import org.litepal.LitePal;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import cn.pedant.SweetAlert.SweetAlertDialog;
+
+import static com.deadlinesaver.android.util.Utility.getTimeAheadString;
+import static com.deadlinesaver.android.util.Utility.minutesInDay;
+import static com.deadlinesaver.android.util.Utility.minutesInHour;
 
 public class EditDeadlineActivity extends BaseActivity {
 
@@ -54,12 +56,10 @@ public class EditDeadlineActivity extends BaseActivity {
     private TextView dueDateTextView;
     private TextView dueTimeTextView;
     private TextView deadlineNameTextView;
+    private TextView deadlineAlarmTimeTextView;
     private EditText deadlineContentEditText;
     private LinearLayout deadlineNameLayout;
-
-    private EditText editDeadlineNameEditText;
-    private TextView cancelTextView;
-    private TextView confirmTextView;
+    private LinearLayout deadlineAlarmTimeLayout;
 
     private int due_year;
     private int due_month;
@@ -68,11 +68,23 @@ public class EditDeadlineActivity extends BaseActivity {
     private int due_minute;
 
     private Deadline deadlineInDataBase;
+    /**
+     * 用于存储修改后的提醒时间，因为要在两个地方用到，所以提出来做公共变量
+     */
+    private int alarmTimeAhead;
+
+    /**
+     * 用于判断是否需要重新启动提醒，只有当修改了截止时间或提前提醒时间才为true
+     */
+    private boolean needAlarmAgain = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_deadline);
+
+        //默认不需要重新启动提醒
+        needAlarmAgain = false;
 
         initWidgets();
 
@@ -141,42 +153,71 @@ public class EditDeadlineActivity extends BaseActivity {
         deadlineNameLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final Dialog bottomDialog = new Dialog(EditDeadlineActivity.this, R.style.BottomDialog);
-                View contentView = LayoutInflater.from(EditDeadlineActivity.this).inflate(R.layout.edit_deadline_name_dialog, null);
-                bottomDialog.setContentView(contentView);
-                ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) contentView.getLayoutParams();
-                params.width = getResources().getDisplayMetrics().widthPixels - DensityUtil.dp2px(EditDeadlineActivity.this, 40);
-                params.bottomMargin = DensityUtil.dp2px(EditDeadlineActivity.this, 24);
-                contentView.setLayoutParams(params);
-                bottomDialog.getWindow().setGravity(Gravity.BOTTOM);
-                bottomDialog.getWindow().setWindowAnimations(R.style.BottomDialog_Animation);
+                Utility.showTextInputBottomDialog(EditDeadlineActivity.this, "DDL名称", deadlineNameTextView.getText().toString(), deadlineNameTextView);
+            }
+        });
 
-                //接下来初始化底部弹出Dialog内的控件
-                editDeadlineNameEditText = bottomDialog.findViewById(R.id.edit_deadline_name_dialog_edit_text);
-                cancelTextView = bottomDialog.findViewById(R.id.edit_deadline_name_dialog_cancel_text_view);
-                confirmTextView = bottomDialog.findViewById(R.id.edit_deadline_name_dialog_confirm_text_view);
+        deadlineAlarmTimeLayout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                int time = (int) deadlineInDataBase.getAlarmTimeAhead();
+                int selectedDay = 0, selectedHour = 0, selectedMinute = 0;
+                if (time >= minutesInDay) {
+                    selectedDay = time / minutesInDay;
+                    time %= minutesInDay;
+                }
+                if (time >= minutesInHour) {
+                    selectedHour = time / minutesInHour;
+                    time %= minutesInHour;
+                }
+                if (time > 0) {
+                    selectedMinute = time;
+                }
 
-                editDeadlineNameEditText.setText(deadlineNameTextView.getText().toString());
-                confirmTextView.setOnClickListener(new View.OnClickListener() {
+                List<String> optionItemsDay = new ArrayList<>();
+                List<String> optionItemsHour = new ArrayList<>();
+                List<String> optionItemsMinute = new ArrayList<>();
+
+                for (int i = 0; i <= 30; i++) {
+                    optionItemsDay.add(String.valueOf(i));
+                }
+                for (int i = 0; i <= 23; i++) {
+                    optionItemsHour.add(String.valueOf(i));
+                }
+                for (int i = 0; i <= 59; i++) {
+                    optionItemsMinute.add(String.valueOf(i));
+                }
+
+                OptionsPickerView pvOption = new OptionsPickerBuilder(EditDeadlineActivity.this, new OnOptionsSelectListener() {
                     @Override
-                    public void onClick(View view) {
-                        String newDeadlineName = editDeadlineNameEditText.getText().toString();
-                        if (!newDeadlineName.equals("")) {
-                            deadlineNameTextView.setText(newDeadlineName);
-                            bottomDialog.dismiss();
+                    public void onOptionsSelect(final int options1, final int options2, final int options3, View v) {
+                        final int timeAhead = options1 * minutesInDay + options2 * minutesInHour + options3;
+                        if (timeAhead == 0) {
+                            ToastUtil.showToast(EditDeadlineActivity.this, "请选择一个有效时间！", Toast.LENGTH_LONG);
+                        } else {
+                            alarmTimeAhead = timeAhead;
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    deadlineAlarmTimeTextView.setText(getTimeAheadString(timeAhead));
+                                }
+                            });
                         }
                     }
-                });
-
-                cancelTextView.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        bottomDialog.dismiss();
-                    }
-                });
-
-                //弹出Dialog
-                bottomDialog.show();
+                })
+                        .setTitleText("请选择时间")
+                        .setTitleBgColor(0xFF09DAFF)
+                        .setDividerColor(Color.LTGRAY)
+                        .setTitleColor(Color.WHITE)
+                        .setCancelColor(Color.WHITE)
+                        .setSubmitColor(Color.WHITE)
+                        .isCenterLabel(true)
+                        .setSelectOptions(selectedDay, selectedHour, selectedMinute)
+                        .setLabels("天", "小时", "分钟")
+                        .setCyclic(false, true, true)
+                        .build();
+                pvOption.setNPicker(optionItemsDay, optionItemsHour, optionItemsMinute);
+                pvOption.show();
             }
         });
     }
@@ -211,7 +252,7 @@ public class EditDeadlineActivity extends BaseActivity {
      */
     private void initWidgets() {
         //获取上个活动传来的Deadline的信息
-        Deadline deadline = (Deadline) getIntent().getExtras().get(deadlineExtraName);
+        Deadline deadline = (Deadline) getIntent().getSerializableExtra(deadlineExtraName);
         //根据此Deadline寻找数据库中存储的Deadline，防止save时额外增加DDL数量
         deadlineInDataBase = LitePal.find(Deadline.class, deadline.getId());
 
@@ -220,9 +261,11 @@ public class EditDeadlineActivity extends BaseActivity {
 
         dueDateTextView = findViewById(R.id.edit_deadline_due_date);
         dueTimeTextView = findViewById(R.id.edit_deadline_due_time);
-        deadlineNameTextView = findViewById( R.id.edit_deadline_deadline_name_text_view);
+        deadlineNameTextView = findViewById(R.id.edit_deadline_deadline_name_text_view);
+        deadlineAlarmTimeTextView = findViewById(R.id.edit_deadline_deadline_alarm_time_text_view);
         deadlineContentEditText = findViewById(R.id.edit_deadline_deadline_content_edit_text);
         deadlineNameLayout = findViewById(R.id.edit_deadline_deadline_name_layout);
+        deadlineAlarmTimeLayout = findViewById(R.id.edit_deadline_deadline_alarm_time_layout);
 
         //获取截止时间的Calendar对象
         Calendar dueTimeCalendar = Calendar.getInstance();
@@ -239,7 +282,11 @@ public class EditDeadlineActivity extends BaseActivity {
         dueDateTextView.setText(dueDateText);
         dueTimeTextView.setText(dueTimeText);
 
+        //获取提醒时间
+        alarmTimeAhead = (int) deadline.getAlarmTimeAhead();
+
         deadlineNameTextView.setText(deadline.getDdlName());
+        deadlineAlarmTimeTextView.setText(getTimeAheadString(alarmTimeAhead));
         if (!deadline.getDdlContent().equals("")) {
             deadlineContentEditText.setText(deadline.getDdlContent());
         }
@@ -280,10 +327,18 @@ public class EditDeadlineActivity extends BaseActivity {
         deadlineInDataBase.setDdlName(deadlineNameTextView.getText().toString());
         long totalTime = deadlineInDataBase.getTotalTime();
         long dueTime = Utility.getCalendar(due_year, due_month, due_day, due_hour, due_minute).getTimeInMillis() / Utility.millisecondsInMinute;
+        //此处判断截止时间和提醒时间是否被修改过
+        if (dueTime != deadlineInDataBase.getDueTime() || alarmTimeAhead != (int) deadlineInDataBase.getAlarmTimeAhead()) {
+            needAlarmAgain = true;
+        }
         totalTime += dueTime - deadlineInDataBase.getDueTime();
         deadlineInDataBase.setDueTime(dueTime);
         deadlineInDataBase.setTotalTime(totalTime);
+        deadlineInDataBase.setAlarmTimeAhead(alarmTimeAhead);
         deadlineInDataBase.setDdlContent(deadlineContentEditText.getText().toString());
+        if (needAlarmAgain) {
+            deadlineInDataBase.setAlarmed(false);
+        }
         deadlineInDataBase.save();
 
         //判断是否需要向今日待办事项中添加该DDL
@@ -293,6 +348,10 @@ public class EditDeadlineActivity extends BaseActivity {
             backlog.save();
             UndoneFragment.addBacklog(backlog, false);
         }
+
+        //唤醒一次服务
+        Intent intent = new Intent(EditDeadlineActivity.this, DeadlineAlarmService.class);
+        startService(intent);
     }
 
     /**
@@ -332,9 +391,7 @@ public class EditDeadlineActivity extends BaseActivity {
 
     public static void startActivity(Context context, Deadline deadline) {
         Intent intent = new Intent(context, EditDeadlineActivity.class);
-        Bundle bundle = new Bundle();
-        bundle.putSerializable(deadlineExtraName, deadline);
-        intent.putExtras(bundle);
+        intent.putExtra(deadlineExtraName, deadline);
         context.startActivity(intent);
     }
 }

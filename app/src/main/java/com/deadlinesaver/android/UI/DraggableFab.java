@@ -98,8 +98,8 @@ public class DraggableFab extends FloatingActionButton {
             case MotionEvent.ACTION_UP://手指离开
                 //判断是否为点击事件
                 if (isDrag) {
-                    if (PersonalizedSettingsFragment.getCertainSetting
-                            (PersonalizedSettingsFragment.SettingType.isDoubleSidesAttach)) {
+                    if ((boolean) PersonalizedSettingsFragment.getCertainSetting
+                            (PersonalizedSettingsFragment.SettingName.isDoubleSidesAttach)) {
                         float center = mRootMeasuredWidth / 2;
                         //自动贴边
                         if (mLastRawX <= center) {

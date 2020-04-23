@@ -54,4 +54,5 @@ dependencies {
     implementation 'com.azhon:appupdateX:2.6.0'
     implementation 'com.nightonke:jellytogglebutton:1.0.2'
     implementation 'cn.pedant.sweetalert:library:1.3'
+    implementation 'com.contrarywind:Android-PickerView:4.1.9'
 }
