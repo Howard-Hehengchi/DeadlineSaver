@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/send_feedback_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/themeColor"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:popupTheme="@style/Theme.AppCompat.Light"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_marginTop="40dp"
+                android:layout_marginLeft="20dp"
+                android:layout_marginRight="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <EditText
+                    android:id="@+id/send_feedback_edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="请在此输入您的宝贵意见！"/>
+
+                <com.deadline.statebutton.StateButton
+                    android:id="@+id/send_feedback_send_button"
+                    android:layout_marginTop="15dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_horizontal"
+                    android:text="发送"
+
+                    app:radius="10dp"
+                    app:animationDuration="200"
+
+                    app:strokeDashGap="1dp"
+                    app:strokeDashWidth="8dp"
+                    app:normalStrokeWidth="2dp"
+                    app:pressedStrokeWidth="2dp"
+                    app:unableStrokeWidth="2dp"
+
+                    app:normalStrokeColor="@android:color/white"
+                    app:pressedStrokeColor="@android:color/white"
+                    app:unableStrokeColor="@android:color/white"
+
+                    app:normalTextColor="@android:color/black"
+                    app:pressedTextColor="@android:color/black"
+                    app:unableTextColor="@android:color/black"
+
+                    app:normalBackgroundColor="@color/themeColorContrastLight"
+                    app:pressedBackgroundColor="@color/themeColorContrastLight"
+                    app:unableBackgroundColor="@color/themeColorContrastLight"/>
+            </LinearLayout>
+
+            <View
+                android:layout_marginTop="30dp"
+                android:layout_marginBottom="20dp"
+                android:layout_width="match_parent"
+                android:layout_height="0.5dp"
+                android:background="@color/separateLineColor" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:textColor="#000"
+                    android:gravity="center_horizontal"
+                    android:text="想要加群？" />
+
+                <com.deadline.statebutton.StateButton
+                    android:id="@+id/send_feedback_add_group_button"
+                    android:layout_marginTop="20dp"
+                    android:layout_width="150dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:gravity="center_horizontal"
+                    android:text="点我点我！"
+
+                    app:radius="10dp"
+                    app:animationDuration="200"
+
+                    app:normalTextColor="#000"
+                    app:pressedTextColor="#000"
+                    app:unableTextColor="#000"
+
+                    app:normalBackgroundColor="@color/themeColor"
+                    app:pressedBackgroundColor="@color/themeColorLight"
+                    app:unableBackgroundColor="@color/themeColor"/>
+
+            </LinearLayout>
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

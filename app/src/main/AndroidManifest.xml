@@ -25,15 +25,12 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:replace="android:icon">
+
         <service
             android:name=".services.DeadlineAlarmService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
-        <activity
-            android:name=".activities.EditDeadlineActivity"
-            android:label="编辑DDL"
-            android:theme="@style/EditDeadlineActivityTheme" />
         <activity
             android:name=".activities.AddDeadlineActivity"
             android:label="新增DDL"
@@ -43,11 +40,27 @@
             android:label="添加待办事项"
             android:theme="@style/Theme.AppCompat.Light.Dialog" />
         <activity
+            android:name=".activities.SendFeedbackActivity"
+            android:label="意见反馈"
+            android:theme="@style/SendFeedbackActivityTheme" />
+        <activity
+            android:name=".activities.RewardAuthorActivity"
+            android:label="打赏作者"
+            android:theme="@style/RewardAuthorActivityTheme" />
+        <activity
+            android:name=".activities.SoftwareInfoActivity"
+            android:label="软件信息"
+            android:theme="@style/SoftwareInfoActivityTheme"/>
+        <activity
+            android:name=".activities.EditDeadlineActivity"
+            android:label="编辑DDL"
+            android:theme="@style/EditDeadlineActivityTheme" />
+        <activity
             android:name=".activities.MainActivity"
+            android:exported="true"
             android:label="DeadlineSaver"
-            android:theme="@style/MainActivityTheme"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:theme="@style/MainActivityTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

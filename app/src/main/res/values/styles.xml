@@ -14,6 +14,15 @@
     <style name="EditDeadlineActivityTheme" parent="AppTheme">
     </style>
 
+    <style name="SendFeedbackActivityTheme" parent="AppTheme">
+    </style>
+
+    <style name="RewardAuthorActivityTheme" parent="AppTheme">
+    </style>
+
+    <style name="SoftwareInfoActivityTheme" parent="AppTheme">
+    </style>
+
     <style name="BottomDialog" parent="@style/Base.V7.Theme.AppCompat.Light.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

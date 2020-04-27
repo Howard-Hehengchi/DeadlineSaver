@@ -4,6 +4,13 @@
     <color name="colorPrimaryDark">#3700B3</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="themeColor">#09DAFF</color>
+    <color name="themeColorLight">#9409DAFF</color>
     <color name="confirmTextColor">#0032E8</color>
     <color name="separateLineColor">#BDBDBD</color>
+    <color name="themeColorContrastLight">#8AFF9E00</color>
+    <color name="themeColorContrast">#FF9E00</color>
+
+    <color name="infoColor">#FFBB7D</color>
+    <color name="flipBackSideColor">#F3F3F3</color>
+
 </resources>

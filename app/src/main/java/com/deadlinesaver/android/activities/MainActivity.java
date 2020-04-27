@@ -3,6 +3,8 @@ package com.deadlinesaver.android.activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentPagerAdapter;
 
@@ -10,11 +12,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.azhon.appupdate.config.UpdateConfiguration;
@@ -37,6 +42,7 @@ import com.deadlinesaver.android.UI.NoScrollViewPager;
 import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.navigation.NavigationView;
 
 import org.jetbrains.annotations.NotNull;
 import org.litepal.LitePal;
@@ -50,19 +56,21 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+import static com.deadlinesaver.android.personalData.ImportantData.address;
+
 public class MainActivity extends BaseActivity {
 
-    private final static String spName = "MainActivitySP";
-    private final static String lastUpdateTimeName = "lastUpdateTime";
-    private final static String sortWayName = "sortWay";
+    private static final String spName = "MainActivitySP";
+    private static final String lastUpdateTimeName = "lastUpdateTime";
+    private static final String sortWayName = "sortWay";
 
-    private final static String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
-    private final static String oldVersionApkName_1 = "/TODOList.apk";
-    private final static String oldVersionApkName_2 = "/DeadlineSaver.apk";
+    private static final String oldVersionApkName_1 = "/TODOList.apk";
+    private static final String oldVersionApkName_2 = "/DeadlineSaver.apk";
     private ApkInfo apkInfo;
 
     private NoScrollViewPager noScrollViewPager;
     private BottomNavigationView bottomNavigationView;
+    private DrawerLayout drawerLayout;
     private List<Fragment> fragmentList = new ArrayList<>();
     private Toolbar toolbar;
     private List<String> titles = new ArrayList<>();
@@ -182,6 +190,9 @@ public class MainActivity extends BaseActivity {
                 sortWay = SortWay.SortByName;
                 ToastUtil.showToast(MainActivity.this, "按名称排序", Toast.LENGTH_SHORT);
                 break;
+            case android.R.id.home:
+                drawerLayout.openDrawer(GravityCompat.START);
+                break;
         }
         DDLFragment.sortDDL();
 
@@ -206,6 +217,41 @@ public class MainActivity extends BaseActivity {
             actionBar.setHomeAsUpIndicator(R.drawable.ic_open_drawer);
         }
 
+        drawerLayout = findViewById(R.id.main_drawer_layout);
+
+        DisplayMetrics metric = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metric);
+        int windowsWidth = metric.widthPixels;
+        int windowsHeight = metric.heightPixels;
+        NavigationView navigationView = findViewById(R.id.main_nav_view);
+        ViewGroup.LayoutParams leftParams = navigationView.getLayoutParams();
+        leftParams.height = windowsHeight;
+        leftParams.width = (int) (windowsWidth * 0.6);
+        navigationView.setLayoutParams(leftParams);
+
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+                Intent intent;
+                switch (menuItem.getItemId()) {
+                    case R.id.main_nav_feedback:
+                        intent = new Intent(MainActivity.this, SendFeedbackActivity.class);
+                        startActivity(intent);
+                        break;
+                    case R.id.main_nav_reward:
+                        intent = new Intent(MainActivity.this, RewardAuthorActivity.class);
+                        startActivity(intent);
+                        break;
+                    case R.id.main_nav_info:
+                        intent = new Intent(MainActivity.this, SoftwareInfoActivity.class);
+                        startActivity(intent);
+                        break;
+                }
+                drawerLayout.closeDrawers();
+                return true;
+            }
+        });
+
         initTitles();
 
         initBottomNavigationView();
@@ -229,6 +275,7 @@ public class MainActivity extends BaseActivity {
                 }
             }
         });
+        fab.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.themeColorContrast)));
         fab.show();
 
         PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);

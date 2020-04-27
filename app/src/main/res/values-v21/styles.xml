@@ -9,4 +9,16 @@
         <item name="android:statusBarColor">@color/themeColor</item>
     </style>
 
+    <style name="SendFeedbackActivityTheme" parent="AppTheme">
+        <item name="android:statusBarColor">@color/themeColor</item>
+    </style>
+
+    <style name="RewardAuthorActivityTheme" parent="AppTheme">
+        <item name="android:statusBarColor">@color/themeColor</item>
+    </style>
+
+    <style name="SoftwareInfoActivityTheme" parent="AppTheme">
+        <item name="android:statusBarColor">@color/themeColor</item>
+    </style>
+
 </resources>

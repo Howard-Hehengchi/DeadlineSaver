@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="payHint">
+        <item>点击屏幕任意位置以切换支付方式</item>
+    </string-array>
+</resources>
