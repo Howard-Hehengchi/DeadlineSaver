@@ -37,6 +37,9 @@ android {
         }
     }
 
+    packagingOptions {
+        pickFirst 'META-INF/LICENSE.txt' // picks the JavaMail license file
+    }
 }
 
 dependencies {

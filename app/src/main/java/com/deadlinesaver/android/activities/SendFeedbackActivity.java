@@ -64,7 +64,7 @@ public class SendFeedbackActivity extends BaseActivity {
             public void onClick(View view) {
                 final String text = editText.getText().toString();
                 if (!text.equals("")) {
-                    runOnUiThread(new Runnable() {
+                    new Thread(new Runnable() {
                         @Override
                         public void run() {
                             try {
@@ -73,7 +73,7 @@ public class SendFeedbackActivity extends BaseActivity {
                                 e.printStackTrace();
                             }
                         }
-                    });
+                    }).start();
 
                     final SweetAlertDialog dialog = new SweetAlertDialog(SendFeedbackActivity.this, SweetAlertDialog.SUCCESS_TYPE)
                             .setTitleText("发送成功！")
@@ -161,7 +161,7 @@ public class SendFeedbackActivity extends BaseActivity {
         properties.setProperty("mail.smtp.host", "smtp.163.com");
         properties.setProperty("mail.smtp.port", "25");
         properties.setProperty("mail.smtp.auth", "true");
-        properties.setProperty("mail.smtp.timeout", "1000");
+        properties.setProperty("mail.smtp.timeout", "5000");
 
         // 获取默认session对象
         Session session = Session.getDefaultInstance(properties,

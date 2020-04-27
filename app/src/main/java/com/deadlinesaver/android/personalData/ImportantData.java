@@ -20,7 +20,8 @@ public class ImportantData {
     /**
      * 发送者邮箱授权码
      */
-    public static final String authorizationCode = "BWWVXVUFYOLNIOOU";
+    public static final String authorizationCode = "NRFAPCDGFSVAYDVZ";
+    //public static final String authorizationCode = "coldgoats826";
 
     /**
      * 支付宝二维码解码结果

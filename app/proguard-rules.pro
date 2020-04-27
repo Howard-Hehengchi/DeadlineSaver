@@ -41,3 +41,20 @@
 -dontwarn com.squareup.okhttp3.**
 -keep class com.squareup.okhttp3.** { *;}
 -dontwarn okio.**
+
+-keep class com.sun.activation.registries.**{ *;}
+-keep class javax.activation.**{ *;}
+-keep class com.sun.mail.auth.**{ *;}
+-keep class com.sun.mail.handlers.**{ *;}
+-keep class com.sun.mail.iap.**{ *;}
+-keep class com.sun.mail.imap.**{ *;}
+-keep class com.sun.mail.imap.protocol.**{ *;}
+-keep class com.sun.mail.pop3.**{ *;}
+-keep class com.sun.mail.smtp.**{ *;}
+-keep class com.sun.mail.util.**{ *;}
+-keep class com.sun.mail.util.logging.**{ *;}
+-keep class javax.mail.**{ *;}
+-keep class javax.mail.internet.**{ *;}
+-keep class javax.mail.event.**{ *;}
+-keep class javax.search.**{ *;}
+-keep class javax.util.**{ *;}
