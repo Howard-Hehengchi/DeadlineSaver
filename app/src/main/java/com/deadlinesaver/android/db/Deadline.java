@@ -35,6 +35,14 @@ public class Deadline extends LitePalSupport implements Serializable {
         ddlContent = "";
     }
 
+    public Deadline(String ddlName, long dueTime, long totalTime, long alarmTimeAhead, String content) {
+        this.ddlName = ddlName;
+        this.dueTime = dueTime;
+        this.totalTime = totalTime;
+        this.alarmTimeAhead = alarmTimeAhead;
+        ddlContent = content;
+    }
+
     public Deadline(String ddlName, long dueTime, long totalTime, boolean isDone) {
         this.ddlName = ddlName;
         this.dueTime = dueTime;

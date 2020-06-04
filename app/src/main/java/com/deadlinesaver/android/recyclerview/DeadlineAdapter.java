@@ -1,15 +1,10 @@
 package com.deadlinesaver.android.recyclerview;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Application;
-import android.content.DialogInterface;
 import android.os.Build;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -28,7 +23,6 @@ import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 import com.deadlinesaver.android.util.VibrateUtil;
-import com.google.android.material.snackbar.Snackbar;
 
 import org.litepal.LitePal;
 
@@ -60,6 +54,8 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
     private String lastDeadlineName;
     private long lastDeadlineDueTime;
     private long lastDeadlineTotalTime;
+    private long lastDeadlineAlarmTimeAhead;
+    private String lastDeadlineContent;
 
     @Override
     public void onItemMove(int fromPos, int toPos) {
@@ -288,6 +284,8 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
         lastDeadlineName = lastDeadline.getDdlName();
         lastDeadlineDueTime = lastDeadline.getDueTime();
         lastDeadlineTotalTime = lastDeadline.getTotalTime();
+        lastDeadlineAlarmTimeAhead = lastDeadline.getAlarmTimeAhead();
+        lastDeadlineContent = lastDeadline.getDdlContent();
 
         //把DDL对应的代办事件删除
         UndoneFragment.removeBacklogOfName(lastDeadline.getDdlName());
@@ -301,7 +299,7 @@ public class DeadlineAdapter extends CustomBaseAdapter<DeadlineAdapter.ViewHolde
     }
 
     private void restoreItem(long dueTime) {
-        Deadline lastDeadline = new Deadline(lastDeadlineName, dueTime, lastDeadlineTotalTime);
+        Deadline lastDeadline = new Deadline(lastDeadlineName, dueTime, lastDeadlineTotalTime, lastDeadlineAlarmTimeAhead, lastDeadlineContent);
         DDLFragment.addDeadline(lastDeadline, false);
         notifyItemRangeChanged(0, mDeadlineList.size());
         lastDeadline.save();

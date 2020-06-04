@@ -8,8 +8,8 @@ android {
         applicationId "com.deadlinesaver.android"
         minSdkVersion 16
         targetSdkVersion 28
-        versionCode 13
-        versionName "0.6.0"
+        versionCode 17
+        versionName "1.0.2"
         resValue "string", "authorities", applicationId
 
         vectorDrawables.useSupportLibrary = true
@@ -68,4 +68,6 @@ dependencies {
     def htextview_version = "0.1.6"
     implementation "com.hanks:htextview-base:$htextview_version"
     implementation "com.hanks:htextview-typer:$htextview_version"
+
+    implementation "android.arch.work:work-runtime:1.0.1"
 }

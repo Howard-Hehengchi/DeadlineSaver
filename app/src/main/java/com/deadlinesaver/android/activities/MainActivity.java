@@ -36,7 +36,6 @@ import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.ToDoListFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
-import com.deadlinesaver.android.services.DeadlineAlarmService;
 import com.deadlinesaver.android.util.HttpUtil;
 import com.deadlinesaver.android.UI.NoScrollViewPager;
 import com.deadlinesaver.android.util.ToastUtil;
@@ -90,6 +89,9 @@ public class MainActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //为了避免下方获取Deadline实例时个性化设置并未初始化的情况
+        PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
+
         //每日第一次打开app时更新今日待办
         Calendar todayCalendar = Utility.getTodayCalendar();
         SharedPreferences sharedPreferences = getSharedPreferences(spName, Context.MODE_PRIVATE);
@@ -121,8 +123,10 @@ public class MainActivity extends BaseActivity {
         DDLFragment.hasCreatedTimer = false;
 
         //启动定时提醒服务
-        Intent intent = new Intent(this, DeadlineAlarmService.class);
-        startService(intent);
+        //Intent intent = new Intent(this, DeadlineAlarmService.class);
+        //startService(intent);
+        //TODO:这里用了定时提醒
+        Utility.setDeadlineAlarmTask(this);
 
         checkUpdate();
 
@@ -155,8 +159,10 @@ public class MainActivity extends BaseActivity {
                     }
 
                     //强迫服务做一次检查
-                    Intent intent = new Intent(this, DeadlineAlarmService.class);
-                    startService(intent);
+                    //Intent intent = new Intent(this, DeadlineAlarmService.class);
+                    //startService(intent);
+                    //TODO:这里用了定时提醒
+                    Utility.setDeadlineAlarmTask(this);
                 }
             default:
                 break;
@@ -277,8 +283,6 @@ public class MainActivity extends BaseActivity {
         });
         fab.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.themeColorContrast)));
         fab.show();
-
-        PersonalizedSettingsFragment.initializeSettingsData(MainActivity.this);
 
         initBacklogs();
         initDeadlines();

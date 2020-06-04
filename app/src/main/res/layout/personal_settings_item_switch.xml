@@ -36,7 +36,8 @@
             app:jtbLeftBackgroundColor="#D5D5D5"
             app:jtbRightBackgroundColor="#D5D5D5"
             app:jtbLeftThumbColor="#F44336"
-            app:jtbRightThumbColor="@color/themeColor"/>
+            app:jtbRightThumbColor="@color/themeColor"
+            app:jtbDuration="600"/>
     </RelativeLayout>
 
 </LinearLayout>

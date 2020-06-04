@@ -3,9 +3,9 @@ package com.deadlinesaver.android.personalData;
 public class ImportantData {
 
     /**
-     * apk下载地址
+     * apk下载文档地址
      */
-    public static final String address = "http://coldgoats.nat123.cc/ApkDownloader.json";
+    public static final String address = "http://182.92.129.135/ApkDownloader.json";
 
     /**
      * 反馈意见发送者邮箱
@@ -26,7 +26,7 @@ public class ImportantData {
     /**
      * 支付宝二维码解码结果
      */
-    public static final String alipayQRurl = "https://qr.alipay.com/fkx021046pmvohsb5mibq36";
+    public static final String alipayQRurl = "https://qr.alipay.com/fkx17882pattkstjgmcbyac";
 
     /**
      * 调起QQ客户端加群必要链接（群对应的Key）

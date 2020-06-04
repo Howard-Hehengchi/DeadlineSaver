@@ -15,11 +15,23 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.lifecycle.LifecycleOwner;
+import androidx.lifecycle.Observer;
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.activities.EditDeadlineActivity;
+import com.deadlinesaver.android.db.Deadline;
+import com.deadlinesaver.android.fragments.DDLFragment;
 import com.deadlinesaver.android.gson.ApkInfo;
+import com.deadlinesaver.android.worker.DeadlineAlarmWorker;
 import com.google.gson.Gson;
 
 import org.json.JSONArray;
@@ -27,13 +39,25 @@ import org.json.JSONObject;
 
 import java.lang.reflect.Method;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class Utility {
 
     public static final int millisecondsInMinute = 60 * 1000; //TODO:以分钟计时，如有需要可以更改
     public static final int minutesInDay = 24 * 60;
     public static final int minutesInHour = 60;
+
+    private static Map<Long, UUID> deadlineRequestMap = new HashMap<>();
 
     public static ApkInfo handleApkResponse(String response) {
         if (!TextUtils.isEmpty(response)) {
@@ -129,8 +153,6 @@ public class Utility {
             }
         });
 
-
-
         //弹出Dialog
         bottomDialog.show();
     }
@@ -151,5 +173,76 @@ public class Utility {
         }
 
         return builder.toString();
+    }
+
+    /**
+     * 封装好的设置DDL定时提醒任务
+     */
+    public static void setDeadlineAlarmTask(LifecycleOwner owner) {
+        Deadline deadlineToAlarm = DDLFragment.getDeadlineToAlarm();
+        if (deadlineToAlarm != null && !deadlineToAlarm.isAlarmed()) {
+            //计算提醒时间（多久后提醒）
+            long alarmInterval = deadlineToAlarm.getDueTime() - deadlineToAlarm.getAlarmTimeAhead();
+            alarmInterval *= Utility.millisecondsInMinute;
+            alarmInterval = Math.max(alarmInterval, Utility.getCalendar().getTimeInMillis());
+            alarmInterval -= Utility.getCalendar().getTimeInMillis();
+
+            //更改DDL的提醒状态并保存
+            deadlineToAlarm.setAlarmed(true);
+            deadlineToAlarm.save();
+
+            startDeadlineAlarm(owner, alarmInterval, deadlineToAlarm.getId());
+        }
+    }
+
+    /**
+     * 通过WorkManager设置DDL定时提醒任务
+     * @param triggerInterval DDL还要多久提醒，单位为毫秒
+     * @param deadlineId DDL的ID，方便从数据库中查询DDL
+     */
+    private static void startDeadlineAlarm(LifecycleOwner owner, long triggerInterval, final long deadlineId) {
+        Data data = new Data.Builder().putLong(DeadlineAlarmWorker.deadlineIdKey, deadlineId).build();
+        final OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(DeadlineAlarmWorker.class)
+                .setInitialDelay(triggerInterval, TimeUnit.MILLISECONDS)
+                .setInputData(data)
+                .build();
+        WorkManager.getInstance().enqueue(request);
+        deadlineRequestMap.put(deadlineId, request.getId());
+
+        WorkManager.getInstance().getWorkInfoByIdLiveData(request.getId()).observe(owner, new Observer<WorkInfo>() {
+            @Override
+            public void onChanged(WorkInfo workInfo) {
+                if (workInfo.getState().isFinished()) {
+                    //通知完毕就将该键值对删除
+                    removeCertainPair(deadlineId);
+                }
+            }
+        });
+    }
+
+    /**
+     * 根据DDL的id将对应的通知任务删除
+     * @param deadlineId
+     */
+    public static void cancelDeadlineAlarmTask(long deadlineId) {
+        UUID requestId = deadlineRequestMap.get(deadlineId);
+        if (requestId != null) {//有可能这个DDL还没加到提醒任务里去
+            WorkManager.getInstance().cancelWorkById(requestId);
+            removeCertainPair(deadlineId);
+        }
+    }
+
+    /**
+     * 将DDL的id对应的键值对删除
+     * @param deadlineId
+     */
+    private static void removeCertainPair(long deadlineId) {
+        Iterator<Long> iterator = deadlineRequestMap.keySet().iterator();
+        while (iterator.hasNext()) {
+            long key = iterator.next();
+            if (key == deadlineId) {
+                iterator.remove();
+            }
+        }
     }
 }

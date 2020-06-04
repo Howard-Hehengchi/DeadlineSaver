@@ -26,9 +26,7 @@ import com.bigkoo.pickerview.view.OptionsPickerView;
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.db.Backlog;
 import com.deadlinesaver.android.db.Deadline;
-import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
 import com.deadlinesaver.android.fragments.UndoneFragment;
-import com.deadlinesaver.android.services.DeadlineAlarmService;
 import com.deadlinesaver.android.util.ToastUtil;
 import com.deadlinesaver.android.util.Utility;
 
@@ -160,7 +158,7 @@ public class EditDeadlineActivity extends BaseActivity {
         deadlineAlarmTimeLayout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                int time = (int) deadlineInDataBase.getAlarmTimeAhead();
+                int time = alarmTimeAhead;
                 int selectedDay = 0, selectedHour = 0, selectedMinute = 0;
                 if (time >= minutesInDay) {
                     selectedDay = time / minutesInDay;
@@ -338,8 +336,14 @@ public class EditDeadlineActivity extends BaseActivity {
         deadlineInDataBase.setDdlContent(deadlineContentEditText.getText().toString());
         if (needAlarmAgain) {
             deadlineInDataBase.setAlarmed(false);
+            deadlineInDataBase.save();
+            //时间被编辑过，取消原有的提醒任务
+            Utility.cancelDeadlineAlarmTask(deadlineInDataBase.getId());
+            //TODO:这里也要用定时提醒
+            Utility.setDeadlineAlarmTask(this);
+        } else {
+            deadlineInDataBase.save();
         }
-        deadlineInDataBase.save();
 
         //判断是否需要向今日待办事项中添加该DDL
         long timeLeft = deadlineInDataBase.getDueTime() - Utility.getTodayCalendar().getTimeInMillis() / Utility.millisecondsInMinute;
@@ -350,8 +354,8 @@ public class EditDeadlineActivity extends BaseActivity {
         }
 
         //唤醒一次服务
-        Intent intent = new Intent(EditDeadlineActivity.this, DeadlineAlarmService.class);
-        startService(intent);
+        //Intent intent = new Intent(EditDeadlineActivity.this, DeadlineAlarmService.class);
+        //startService(intent);
     }
 
     /**

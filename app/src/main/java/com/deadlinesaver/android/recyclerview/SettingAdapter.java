@@ -1,6 +1,7 @@
 package com.deadlinesaver.android.recyclerview;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,25 +10,19 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bigkoo.pickerview.builder.OptionsPickerBuilder;
-import com.bigkoo.pickerview.builder.TimePickerBuilder;
 import com.bigkoo.pickerview.listener.OnOptionsSelectListener;
-import com.bigkoo.pickerview.listener.OnTimeSelectListener;
 import com.bigkoo.pickerview.view.OptionsPickerView;
-import com.bigkoo.pickerview.view.TimePickerView;
 import com.deadlinesaver.android.R;
 import com.deadlinesaver.android.fragments.PersonalizedSettingsFragment;
-import com.deadlinesaver.android.util.DensityUtil;
 import com.deadlinesaver.android.util.ToastUtil;
-import com.deadlinesaver.android.util.Utility;
 import com.nightonke.jellytogglebutton.JellyToggleButton;
 import com.nightonke.jellytogglebutton.State;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import static com.deadlinesaver.android.util.Utility.getTimeAheadString;
@@ -43,10 +38,12 @@ public class SettingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private Activity mActivity;
     private List<Setting> mSettingList;
+    private LocalBroadcastManager mBroadcastManager;
 
-    public SettingAdapter(Activity activity, List<Setting> settingList) {
+    public SettingAdapter(Activity activity, List<Setting> settingList, LocalBroadcastManager manager) {
         mActivity = activity;
         mSettingList = settingList;
+        mBroadcastManager = manager;
     }
 
     @Override
@@ -68,17 +65,20 @@ public class SettingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     @Override
                     public void onStateChange(float process, State state, JellyToggleButton jtb) {
                         boolean isChecked = false;
-                        if (state == State.LEFT) {
+                        if (state == State.LEFT || state == State.RIGHT_TO_LEFT) {
                             isChecked = false;
-                        } else if (state == State.RIGHT){
+                        } else if (state == State.RIGHT || state == State.LEFT_TO_RIGHT){
                             isChecked = true;
                         }
 
                         Setting setting = mSettingList.get(viewHolderSwitch.getAdapterPosition());
 
+                        if (setting.isOn() != isChecked) {
+                            Intent intent = new Intent(PersonalizedSettingsFragment.saveDataBroadcast);
+                            mBroadcastManager.sendBroadcast(intent);
+                        }
+
                         setting.setOn(isChecked);
-                        PersonalizedSettingsFragment.setCertainSetting
-                                (PersonalizedSettingsFragment.SettingName.isDoubleSidesAttach, isChecked);
                     }
                 });
                 return viewHolderSwitch;
@@ -137,6 +137,9 @@ public class SettingAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                                                         (PersonalizedSettingsFragment.SettingName.defaultAlarmTimeAhead, timeAhead);
                                             }
                                         });
+
+                                        Intent intent = new Intent(PersonalizedSettingsFragment.saveDataBroadcast);
+                                        mBroadcastManager.sendBroadcast(intent);
                                     }
                                 }
                             })

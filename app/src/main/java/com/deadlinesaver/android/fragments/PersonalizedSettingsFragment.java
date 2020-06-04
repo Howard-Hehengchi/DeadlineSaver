@@ -1,6 +1,9 @@
 package com.deadlinesaver.android.fragments;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -10,6 +13,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -21,6 +25,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PersonalizedSettingsFragment extends Fragment {
+
+    public static final String saveDataBroadcast = "com.deadlinesaver.android.REFRESH_PERSONAL_DATA";
 
     private static boolean isInitialize = true;
     private static List<Setting> settings = new ArrayList<>();
@@ -38,42 +44,37 @@ public class PersonalizedSettingsFragment extends Fragment {
     private static final String spName = "PersonalSettings";
 
     private RecyclerView recyclerView;
+    private LocalBroadcastManager localBroadcastManager;
+    private LocalReceiver localReceiver;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.personalized_settings_fragment, container, false);
 
+        Context context = getContext();
+        if (context != null) {
+            localBroadcastManager = LocalBroadcastManager.getInstance(context);
+        }
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(saveDataBroadcast);
+        localReceiver = new LocalReceiver();
+        localBroadcastManager.registerReceiver(localReceiver, intentFilter);
+
         recyclerView = view.findViewById(R.id.personal_settings_recycler_view);
         LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        SettingAdapter adapter = new SettingAdapter(getActivity(), settings);
+        SettingAdapter adapter = new SettingAdapter(getActivity(), settings, localBroadcastManager);
         recyclerView.setAdapter(adapter);
 
         return view;
     }
 
     @Override
-    public void onPause() {
-        //将保存触发条件设置为最高触发率的条件，以保证用户数据即时存储
-        super.onPause();
-        //保存用户个性化设置
-        SharedPreferences.Editor editor =
-                getActivity().getSharedPreferences(spName, Context.MODE_PRIVATE).edit();
-        Setting tempSetting;
-        for (int index = 0; index < settings.size(); index++) {
-            tempSetting = settings.get(index);
-            switch (tempSetting.getType()) {
-                case Switch:
-                    editor.putBoolean(tempSetting.getName(), tempSetting.isOn());
-                    break;
-                case Value:
-                    editor.putInt(tempSetting.getName(), tempSetting.getValue());
-                    break;
-            }
-        }
-        editor.apply();
+    public void onDestroy() {
+        super.onDestroy();
+        localBroadcastManager.unregisterReceiver(localReceiver);
     }
 
     public static void initializeSettingsData(Context context) {
@@ -156,5 +157,27 @@ public class PersonalizedSettingsFragment extends Fragment {
         ringWhenNotification,
         vibrateWhenNotification,
         defaultAlarmTimeAhead //默认以秒为单位
+    }
+
+    class LocalReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //保存用户个性化设置
+            SharedPreferences.Editor editor =
+                    getActivity().getSharedPreferences(spName, Context.MODE_PRIVATE).edit();
+            Setting tempSetting;
+            for (int index = 0; index < settings.size(); index++) {
+                tempSetting = settings.get(index);
+                switch (tempSetting.getType()) {
+                    case Switch:
+                        editor.putBoolean(tempSetting.getName(), tempSetting.isOn());
+                        break;
+                    case Value:
+                        editor.putInt(tempSetting.getName(), tempSetting.getValue());
+                        break;
+                }
+            }
+            editor.apply();
+        }
     }
 }
